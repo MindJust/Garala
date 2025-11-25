@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+// import { Outfit } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Navbar } from "@/components/navbar";
@@ -7,10 +7,10 @@ import { Footer } from "@/components/footer";
 import { CookieConsent } from "@/components/features/legal/cookie-consent";
 import { Toaster } from "sonner";
 
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
-});
+// const outfit = Outfit({
+//   subsets: ["latin"],
+//   variable: "--font-outfit",
+// });
 
 export const metadata: Metadata = {
   title: "Garala - Tout se vend, tout s'achète",
@@ -40,7 +40,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className={`${outfit.variable} font-sans antialiased bg-background text-foreground`}>
+      <body className="font-sans antialiased bg-background text-foreground">
         <Providers>
           <div className="flex flex-col min-h-screen">
             <Navbar />

@@ -11,8 +11,8 @@ export const detailsSchema = z.object({
 })
 
 export const priceSchema = z.object({
-  price: z.coerce.number().min(0, "Le prix ne peut pas être négatif"),
-  currency: z.string().default("XAF"),
+  price: z.number().min(0, "Le prix ne peut pas être négatif"),
+  currency: z.string(),
 })
 
 export const locationSchema = z.object({

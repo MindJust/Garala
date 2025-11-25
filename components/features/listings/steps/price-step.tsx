@@ -31,7 +31,7 @@ export function PriceStep({
                     <label className="text-sm font-medium">Prix</label>
                     <div className="relative">
                         <Input
-                            {...register("price")}
+                            {...register("price", { valueAsNumber: true })}
                             type="number"
                             min="0"
                             step="1"
