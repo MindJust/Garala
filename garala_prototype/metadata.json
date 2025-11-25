@@ -1,0 +1,8 @@
+{
+  "name": "Garala",
+  "description": "La marketplace de référence pour acheter et vendre près de chez vous. Simple, rapide et efficace.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}

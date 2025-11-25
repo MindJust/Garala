@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Garala - Plateforme de Petites Annonces
 
-## Getting Started
+**Slogan :** *Tout se vend, tout s'achète*
 
-First, run the development server:
+Garala est une plateforme de petites annonces inspirée de Leboncoin, adaptée pour le marché centrafricain avec une attention particulière portée à Bangui.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 Stack Technique
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Framework** : Next.js 16 (App Router) with Turbopack
+- **Base de données** : Supabase (PostgreSQL + Auth + Storage + Realtime)
+- **Styling** : Tailwind CSS v4
+- **Langage** : TypeScript
+- **Validation** : Zod
+- **Animations** : Framer Motion
+- **Icônes** : Lucide React
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📱 Fonctionnalités
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### ✅ Implémentées
 
-## Learn More
+- **Authentification**
+  - Email/Password avec vérification
+  - OAuth Google et Apple
+  - Wizard multi-étapes avec toggle Connexion/Inscription
+  
+- **Annonces**
+  - Création via wizard 6 étapes
+  - Upload d'images avec compression WhatsApp (max 1MB)
+  - Feed avec pagination
+  - Détails d'annonce
+  - Localisation Bangui (quartiers/arrondissements)
+  - FCFA (Franc CFA)
+  - **Gestion d'annonces** (Sprint 1)
+    - Partager (Web Share API + clipboard)
+    - Modifier (redirect vers edit)
+    - Supprimer avec confirmation
+    - Signaler une annonce
 
-To learn more about Next.js, take a look at the following resources:
+- **Modération**
+  - Table reports avec RLS
+  - Signalements par utilisateurs authentifiés
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Profil**
+  - Modification nom/username
+  - Suppression de compte avec archivage
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Conformité Légale**
+  - Pages CGU, Privacy, Cookies, À propos
+  - Cookie consent banner
+  - Archivage 90 jours des comptes supprimés
+  - Footer avec liens légaux
 
-## Deploy on Vercel
+### 🚧 À venir (Sprint 2+)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Annonces Invité** (sans compte, expiration 7j)
+- **Édition d'annonces** (formulaire complet)
+- **Messagerie** (Realtime chat)
+- **Favoris & Notifications**
+- **Dark Mode**
+- **Bottom Navigation Mobile**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📚 Documentation
+
+- **CHANGELOG.md** : Historique détaillé des modifications
+- **MEMORY.md** : Problèmes récurrents et solutions
+- **garala_prototype/README.md** : Architecture prototype de référence
+
+## 🐛 Problèmes Connus
+
+### Build Turbopack
+
+Problème Next.js 16 avec fonts en production. Utiliser `npm run dev`.
+
+### Suppression OAuth
+
+Suppression d'utilisateurs OAuth depuis Dashboard Supabase peut échouer. Utiliser la fonction `delete_user_account()`.
+
+---
+
+**Garala** - *Tout se vend, tout s'achète* 🏪
