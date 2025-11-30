@@ -1,16 +1,13 @@
 import type { Metadata } from "next";
-// import { Outfit } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { BottomNav } from "@/components/mobile/bottom-nav";
 import { CookieConsent } from "@/components/features/legal/cookie-consent";
+import { GlobalVibrations } from "@/components/global-vibrations";
 import { Toaster } from "sonner";
-
-// const outfit = Outfit({
-//   subsets: ["latin"],
-//   variable: "--font-outfit",
 // });
 
 export const metadata: Metadata = {
@@ -50,6 +47,7 @@ export default function RootLayout({
           </div>
           <BottomNav />
           <CookieConsent />
+          <GlobalVibrations />
           <Toaster position="top-center" />
         </Providers>
       </body>
