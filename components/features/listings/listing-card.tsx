@@ -7,6 +7,7 @@ import { getCategoryLabel } from "@/lib/categories"
 import { useState, useTransition } from "react"
 import { createConversation } from "@/components/features/messages/messages.actions"
 import { toast } from "sonner"
+import { usePreferences } from "@/hooks/use-preferences"
 
 interface ListingCardProps {
     listing: any
@@ -15,23 +16,21 @@ interface ListingCardProps {
 export function ListingCard({ listing }: ListingCardProps) {
     const [isFavorite, setIsFavorite] = useState(false)
     const [isPending, startTransition] = useTransition()
+    const { vibrate } = usePreferences()
     const isSold = listing.status === 'sold'
     const isPro = listing.profiles?.is_pro || false
 
     const handleFavorite = (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
-
-        if (navigator.vibrate) navigator.vibrate(10)
-
+        vibrate()
         setIsFavorite(!isFavorite)
     }
 
     const handleMessage = (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
-
-        if (navigator.vibrate) navigator.vibrate(10)
+        vibrate()
 
         if (!listing.user_id) {
             toast.error("Impossible de contacter le vendeur")
@@ -65,7 +64,6 @@ export function ListingCard({ listing }: ListingCardProps) {
                     </div>
                 )}
 
-                {/* Sold Overlay */}
                 {isSold && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
                         <div className="bg-red-600 text-white px-6 py-2 transform -rotate-12 font-black text-xl uppercase tracking-widest shadow-lg border-4 border-white">
@@ -74,7 +72,6 @@ export function ListingCard({ listing }: ListingCardProps) {
                     </div>
                 )}
 
-                {/* Price Badge - Top Left */}
                 <div className="absolute top-3 left-3">
                     <div className="bg-white dark:bg-black/90 backdrop-blur-md text-gray-900 dark:text-white font-black text-sm px-3 py-1.5 rounded-full shadow-lg border border-gray-200 dark:border-transparent flex items-baseline gap-1">
                         {listing.price?.toLocaleString('fr-FR')}
@@ -84,7 +81,6 @@ export function ListingCard({ listing }: ListingCardProps) {
                     </div>
                 </div>
 
-                {/* Action Buttons - Top Right */}
                 <div className="absolute top-3 right-3 flex flex-col gap-2">
                     <button
                         className={`p-2 rounded-full transition-all active:scale-90 shadow-sm ${isFavorite
@@ -108,7 +104,6 @@ export function ListingCard({ listing }: ListingCardProps) {
                     )}
                 </div>
 
-                {/* PRO Badge */}
                 {isPro && (
                     <span className="absolute bottom-3 left-3 bg-black dark:bg-white text-white dark:text-black text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider">
                         PRO
