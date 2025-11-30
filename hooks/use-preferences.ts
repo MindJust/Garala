@@ -14,19 +14,5 @@ export const usePreferences = create<PreferencesStore>()(
         (set, get) => ({
             vibrationsEnabled: true,
 
-            toggleVibrations: () => set((state) => ({
-                vibrationsEnabled: !state.vibrationsEnabled
-            })),
-
-            vibrate: (duration = 10) => {
-                const { vibrationsEnabled } = get()
-                if (vibrationsEnabled && navigator.vibrate) {
-                    navigator.vibrate(duration)
-                }
-            }
-        }),
-        {
-            name: 'garala-preferences'
-        }
     )
 )
