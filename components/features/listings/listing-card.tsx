@@ -9,7 +9,7 @@ import { createConversation } from "@/components/features/messages/messages.acti
 import { toast } from "sonner"
 
 interface ListingCardProps {
-    listing: any // Using any for now due to location transformation
+    listing: any
 }
 
 export function ListingCard({ listing }: ListingCardProps) {
@@ -21,13 +21,17 @@ export function ListingCard({ listing }: ListingCardProps) {
     const handleFavorite = (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
+
+        if (navigator.vibrate) navigator.vibrate(10)
+
         setIsFavorite(!isFavorite)
-        // TODO: Call server action to toggle favorite
     }
 
     const handleMessage = (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
+
+        if (navigator.vibrate) navigator.vibrate(10)
 
         if (!listing.user_id) {
             toast.error("Impossible de contacter le vendeur")
@@ -47,7 +51,6 @@ export function ListingCard({ listing }: ListingCardProps) {
             href={`/listings/${listing.id}`}
             className="group block bg-card rounded-[24px] overflow-hidden shadow-[0_2px_15px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_15px_rgba(0,0,0,0.2)] hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 relative border border-transparent dark:border-border"
         >
-            {/* Image Container */}
             <div className="relative aspect-[4/3] bg-muted overflow-hidden">
                 {listing.images?.[0] ? (
                     <Image
@@ -71,11 +74,11 @@ export function ListingCard({ listing }: ListingCardProps) {
                     </div>
                 )}
 
-                {/* Price Badge - Floating Top Left */}
+                {/* Price Badge - Top Left */}
                 <div className="absolute top-3 left-3">
-                    <div className="bg-white/95 dark:bg-black/80 backdrop-blur-md text-foreground font-black text-sm px-3 py-1.5 rounded-full shadow-sm flex items-baseline gap-1">
+                    <div className="bg-white dark:bg-black/90 backdrop-blur-md text-gray-900 dark:text-white font-black text-sm px-3 py-1.5 rounded-full shadow-lg border border-gray-200 dark:border-transparent flex items-baseline gap-1">
                         {listing.price?.toLocaleString('fr-FR')}
-                        <span className="text-[10px] text-muted-foreground font-bold">
+                        <span className="text-[10px] text-gray-600 dark:text-gray-400 font-bold">
                             {listing.currency === 'XAF' ? 'FCFA' : listing.currency}
                         </span>
                     </div>
@@ -83,7 +86,6 @@ export function ListingCard({ listing }: ListingCardProps) {
 
                 {/* Action Buttons - Top Right */}
                 <div className="absolute top-3 right-3 flex flex-col gap-2">
-                    {/* Favorite Button */}
                     <button
                         className={`p-2 rounded-full transition-all active:scale-90 shadow-sm ${isFavorite
                                 ? 'bg-red-50 dark:bg-red-900/50 text-red-500'
@@ -95,7 +97,6 @@ export function ListingCard({ listing }: ListingCardProps) {
                         <Heart size={18} className={isFavorite ? 'fill-current' : ''} strokeWidth={2.5} />
                     </button>
 
-                    {/* Message Button */}
                     {!isSold && (
                         <button
                             className="p-2 rounded-full transition-all active:scale-90 shadow-sm bg-black/20 backdrop-blur-md text-white hover:bg-black/30 disabled:opacity-50"
@@ -115,7 +116,6 @@ export function ListingCard({ listing }: ListingCardProps) {
                 )}
             </div>
 
-            {/* Content - Minimalist */}
             <div className="p-4">
                 <div className="flex justify-between items-start gap-2 mb-1">
                     <h3 className="text-foreground font-bold leading-snug line-clamp-2 flex-grow text-[15px]">

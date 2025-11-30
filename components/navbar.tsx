@@ -55,12 +55,20 @@ export function Navbar() {
                             Favoris
                         </Link>
                         {user && (
-                            <Link
-                                href="/account"
-                                className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
-                            >
-                                Mon Compte
-                            </Link>
+                            <>
+                                <Link
+                                    href="/messages"
+                                    className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
+                                >
+                                    Messages
+                                </Link>
+                                <Link
+                                    href="/account"
+                                    className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
+                                >
+                                    Mon Compte
+                                </Link>
+                            </>
                         )}
                     </nav>
                 </div>
