@@ -27,59 +27,98 @@ export function Navbar() {
     }, [])
 
     return (
-        {/* Help Menu */ }
-        < div className = "relative" >
-            <button
-                onClick={() => setHelpMenuOpen(!helpMenuOpen)}
-                className="p-2 hover:bg-accent rounded-lg transition-colors"
-                aria-label="Aide"
-            >
-                <HelpCircle className="w-5 h-5" />
-            </button>
+        <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="container flex h-16 items-center justify-between">
+                <div className="flex items-center gap-8">
+                    <Link href="/" className="flex items-center">
+                        <Image src="/logo.png" alt="Garala" width={40} height={40} className="w-10 h-10" />
+                    </Link>
 
-    {
-        helpMenuOpen && (
-            <>
-                <div className="fixed inset-0 z-[60]" onClick={() => setHelpMenuOpen(false)} />
-                <div className="absolute right-0 mt-2 w-56 bg-card border rounded-lg shadow-lg z-[70]">
-                    <div className="py-2">
+                    {/* Desktop Navigation Links - Hidden on mobile/tablet */}
+                    <nav className="hidden lg:flex items-center gap-6">
                         <Link
-                            href="/legal/terms"
-                            className="block px-4 py-2 hover:bg-accent transition-colors text-sm"
-                            onClick={() => setHelpMenuOpen(false)}
+                            href="/"
+                            className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
                         >
-                            CGU
+                            Accueil
                         </Link>
                         <Link
-                            href="/legal/privacy"
-                            className="block px-4 py-2 hover:bg-accent transition-colors text-sm"
-                            onClick={() => setHelpMenuOpen(false)}
+                            href="/search"
+                            className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
                         >
-                            Confidentialité
+                            Rechercher
                         </Link>
                         <Link
-                            href="/legal/cookies"
-                            className="block px-4 py-2 hover:bg-accent transition-colors text-sm"
-                            onClick={() => setHelpMenuOpen(false)}
+                            href="/favorites"
+                            className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
                         >
-                            Cookies
+                            Favoris
                         </Link>
-                        <Link
-                            href="/legal/about"
-                            className="block px-4 py-2 hover:bg-accent transition-colors text-sm"
-                            onClick={() => setHelpMenuOpen(false)}
-                        >
-                            À propos
-                        </Link>
-                    </div>
+                        {user && (
+                            <Link
+                                href="/account"
+                                className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
+                            >
+                                Mon Compte
+                            </Link>
+                        )}
+                    </nav>
                 </div>
-            </>
-        )
-    }
-                    </div >
 
-    {
-        user?(
+                <div className="flex items-center gap-2 md:gap-4">
+                    {/* Dark Mode Toggle - Always visible */}
+                    <ThemeToggle />
+
+                    {/* Help Menu */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setHelpMenuOpen(!helpMenuOpen)}
+                            className="p-2 hover:bg-accent rounded-lg transition-colors"
+                            aria-label="Aide"
+                        >
+                            <HelpCircle className="w-5 h-5" />
+                        </button>
+
+                        {helpMenuOpen && (
+                            <>
+                                <div className="fixed inset-0 z-[60]" onClick={() => setHelpMenuOpen(false)} />
+                                <div className="absolute right-0 mt-2 w-56 bg-card border rounded-lg shadow-lg z-[70]">
+                                    <div className="py-2">
+                                        <Link
+                                            href="/legal/terms"
+                                            className="block px-4 py-2 hover:bg-accent transition-colors text-sm"
+                                            onClick={() => setHelpMenuOpen(false)}
+                                        >
+                                            CGU
+                                        </Link>
+                                        <Link
+                                            href="/legal/privacy"
+                                            className="block px-4 py-2 hover:bg-accent transition-colors text-sm"
+                                            onClick={() => setHelpMenuOpen(false)}
+                                        >
+                                            Confidentialité
+                                        </Link>
+                                        <Link
+                                            href="/legal/cookies"
+                                            className="block px-4 py-2 hover:bg-accent transition-colors text-sm"
+                                            onClick={() => setHelpMenuOpen(false)}
+                                        >
+                                            Cookies
+                                        </Link>
+                                        <Link
+                                            href="/legal/about"
+                                            className="block px-4 py-2 hover:bg-accent transition-colors text-sm"
+                                            onClick={() => setHelpMenuOpen(false)}
+                                        >
+                                            À propos
+                                        </Link>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    {user ? (
                         <>
                             <Link href="/listings/new" className="hidden md:flex">
                                 <Button className="gap-2">
@@ -129,18 +168,17 @@ export function Navbar() {
                             </div>
                         </>
                     ) : (
-        <>
-            <Link href="/auth">
-                <Button variant="ghost" className="hidden md:flex">Connexion</Button>
-            </Link>
-            <Link href="/auth">
-                <Button>Inscription</Button>
-            </Link>
-        </>
-    )
-}
-                </div >
-            </div >
-        </nav >
+                        <>
+                            <Link href="/auth">
+                                <Button variant="ghost" className="hidden md:flex">Connexion</Button>
+                            </Link>
+                            <Link href="/auth">
+                                <Button>Inscription</Button>
+                            </Link>
+                        </>
+                    )}
+                </div>
+            </div>
+        </nav>
     )
 }
