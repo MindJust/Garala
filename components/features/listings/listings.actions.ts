@@ -44,6 +44,57 @@ export async function createListing(data: ListingData) {
     redirect('/')
 }
 
+export async function updateListing(id: string, data: ListingData) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        return { error: "Vous devez être connecté pour modifier une annonce." }
+    }
+
+    // Verify ownership
+    const { data: listing } = await supabase
+        .from('listings')
+        .select('user_id')
+        .eq('id', id)
+        .single()
+
+    if (!listing || listing.user_id !== user.id) {
+        return { error: "Vous n'êtes pas autorisé à modifier cette annonce." }
+    }
+
+    // Validate data on server side
+    const result = listingSchema.safeParse(data)
+    if (!result.success) {
+        return { error: "Données invalides." }
+    }
+
+    const { error } = await supabase
+        .from('listings')
+        .update({
+            title: data.title,
+            description: data.description,
+            price: data.price,
+            currency: data.currency,
+            category: data.category,
+            images: data.images,
+            location: {
+                quartier: data.quartier,
+                arrondissement: data.arrondissement || ""
+            },
+            phone: data.phone,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+
+    if (error) {
+        console.error('Error updating listing:', error)
+        return { error: "Erreur lors de la modification de l'annonce." }
+    }
+
+    redirect(`/listings/${id}`)
+}
+
 export async function uploadListingImage(formData: FormData) {
     const supabase = await createClient()
 

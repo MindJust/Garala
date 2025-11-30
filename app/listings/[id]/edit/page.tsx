@@ -1,6 +1,8 @@
 import { notFound, redirect } from "next/navigation"
 import { getListing } from "@/components/features/listings/listings.actions"
 import { isListingOwner } from "@/components/features/listings/listing-management.actions"
+import { ListingWizard } from "@/components/features/listings/listing-wizard"
+import { ListingData } from "@/components/features/listings/listings.schema"
 
 export default async function EditListingPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -18,23 +20,31 @@ export default async function EditListingPage({ params }: { params: Promise<{ id
         redirect(`/listings/${id}`)
     }
 
-    // Check if it's a guest listing
+    // Check if it's a guest listing (future feature)
     if (listing.is_guest) {
         redirect(`/listings/${id}`) // Guest listings cannot be edited
     }
 
+    // Transform listing data to match ListingData schema
+    const initialData: Partial<ListingData> = {
+        category: listing.category,
+        title: listing.title,
+        description: listing.description || undefined,
+        price: listing.price,
+        currency: listing.currency,
+        quartier: listing.quartier,
+        arrondissement: listing.arrondissement || undefined,
+        phone: listing.phone || undefined,
+        images: listing.images || []
+    }
+
     return (
         <div className="container py-8 max-w-3xl">
-            <h1 className="text-3xl font-bold mb-8">Modifier l'annonce</h1>
-
-            <div className="bg-muted/50 border border-dashed rounded-lg p-12 text-center">
-                <p className="text-muted-foreground text-lg mb-4">
-                    Page d'édition en cours de développement
-                </p>
-                <p className="text-sm text-muted-foreground">
-                    Cette fonctionnalité sera disponible dans Sprint 2
-                </p>
-            </div>
+            <ListingWizard
+                mode="edit"
+                listingId={id}
+                initialData={initialData}
+            />
         </div>
     )
 }
