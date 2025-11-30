@@ -121,14 +121,36 @@ export async function uploadListingImage(formData: FormData) {
 
     return { url: publicUrl }
 }
+
+export async function getListings() {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase
+        .from('listings')
+        .select(`
+            *,
+            profiles (
+                id,
+                full_name,
+                username,
+                avatar_url,
+                is_pro
+            )
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+
+    if (error) {
+        console.error('Error fetching listings:', error)
+        return []
     }
 
-// Transform database location jsonb to flat structure for component
-return data.map(listing => ({
-    ...listing,
-    quartier: listing.location?.quartier,
-    arrondissement: listing.location?.arrondissement,
-}))
+    // Transform database location jsonb to flat structure for component
+    return data.map(listing => ({
+        ...listing,
+        quartier: listing.location?.quartier,
+        arrondissement: listing.location?.arrondissement,
+    }))
 }
 
 export async function getListing(id: string) {
@@ -137,14 +159,15 @@ export async function getListing(id: string) {
     const { data: listing, error } = await supabase
         .from('listings')
         .select(`
-      *,
-      profiles (
-        id,
-        full_name,
-        username,
-        avatar_url
-      )
-    `)
+            *,
+            profiles (
+                id,
+                full_name,
+                username,
+                avatar_url,
+                is_pro
+            )
+        `)
         .eq('id', id)
         .eq('status', 'active')
         .single()
