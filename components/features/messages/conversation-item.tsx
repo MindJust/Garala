@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { MessageCircle } from "lucide-react"
-import type { Conversation } from "../messages.actions"
+import type { Conversation } from "./messages.actions"
 
 interface ConversationItemProps {
     conversation: Conversation

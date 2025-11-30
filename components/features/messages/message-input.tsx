@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Send } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { sendMessage } from "../messages.actions"
+import { sendMessage } from "./messages.actions"
 import { toast } from "sonner"
 
 interface MessageInputProps {

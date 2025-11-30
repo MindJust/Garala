@@ -1,7 +1,7 @@
 'use client'
 
 import { ConversationItem } from "./conversation-item"
-import type { Conversation } from "../messages.actions"
+import type { Conversation } from "./messages.actions"
 import { MessageSquare } from "lucide-react"
 
 interface ConversationsListProps {
