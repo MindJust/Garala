@@ -8,12 +8,14 @@ import { toast } from "sonner"
 import { ImageUpload } from "./image-upload"
 import { AudioRecorder } from "./audio-recorder"
 import { MeetingScheduler } from "./meeting-scheduler"
+import { createClient } from "@/lib/supabase/client"
 
 interface MessageInputProps {
     conversationId: string
+    onMessageSent?: (tempMessage: any) => void
 }
 
-export function MessageInput({ conversationId }: MessageInputProps) {
+export function MessageInput({ conversationId, onMessageSent }: MessageInputProps) {
     const [message, setMessage] = useState("")
     const [sending, setSending] = useState(false)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -32,10 +34,37 @@ export function MessageInput({ conversationId }: MessageInputProps) {
 
         if (!message.trim() || sending) return
 
-        setSending(true)
         const content = message.trim()
         setMessage("") // Clear immediately for better UX
 
+        // Optimistic update - show message immediately
+        if (onMessageSent) {
+            const supabase = createClient()
+            const { data: { user } } = await supabase.auth.getUser()
+
+            if (user) {
+                // Create temporary message to show immediately
+                const tempMessage = {
+                    id: `temp-${Date.now()}`,
+                    conversation_id: conversationId,
+                    sender_id: user.id,
+                    content: content,
+                    message_type: 'text' as const,
+                    media_url: null,
+                    meeting_data: null,
+                    read_at: null,
+                    created_at: new Date().toISOString(),
+                    sender: {
+                        id: user.id,
+                        full_name: user.user_metadata?.full_name || 'Vous',
+                        avatar_url: user.user_metadata?.avatar_url
+                    }
+                }
+                onMessageSent(tempMessage)
+            }
+        }
+
+        setSending(true)
         const result = await sendMessage(conversationId, content)
 
         if (result?.error) {
