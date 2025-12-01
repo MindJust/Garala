@@ -5,6 +5,9 @@ import { Send } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { sendMessage } from "./messages.actions"
 import { toast } from "sonner"
+import { ImageUpload } from "./image-upload"
+import { AudioRecorder } from "./audio-recorder"
+import { MeetingScheduler } from "./meeting-scheduler"
 
 interface MessageInputProps {
     conversationId: string
@@ -53,6 +56,14 @@ export function MessageInput({ conversationId }: MessageInputProps) {
     return (
         <form onSubmit={handleSubmit} className="border-t border-border p-4 bg-background">
             <div className="flex items-end gap-2">
+                {/* Media Actions */}
+                <div className="flex items-center gap-1">
+                    <ImageUpload conversationId={conversationId} />
+                    <AudioRecorder conversationId={conversationId} />
+                    <MeetingScheduler conversationId={conversationId} />
+                </div>
+
+                {/* Text Input */}
                 <textarea
                     ref={textareaRef}
                     value={message}
@@ -63,6 +74,8 @@ export function MessageInput({ conversationId }: MessageInputProps) {
                     rows={1}
                     disabled={sending}
                 />
+
+                {/* Send Button */}
                 <Button
                     type="submit"
                     size="icon"

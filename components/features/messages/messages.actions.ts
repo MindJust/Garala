@@ -222,3 +222,158 @@ export async function markAsRead(messageId: string) {
         console.error('Error marking message as read:', error)
     }
 }
+
+/**
+ * Upload image to message storage
+ */
+export async function uploadMessageImage(conversationId: string, file: File) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        return { error: "Vous devez être connecté." }
+    }
+
+    // Generate unique filename
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${conversationId}/${user.id}_${Date.now()}.${fileExt}`
+
+    // Upload to storage
+    const { error: uploadError, data } = await supabase.storage
+        .from('message-media')
+        .upload(fileName, file)
+
+    if (uploadError) {
+        console.error('Error uploading image:', uploadError)
+        return { error: "Erreur lors de l'upload de l'image." }
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+        .from('message-media')
+        .getPublicUrl(fileName)
+
+    return { url: publicUrl }
+}
+
+/**
+ * Send image message
+ */
+export async function sendImageMessage(conversationId: string, imageUrl: string) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        return { error: "Vous devez être connecté." }
+    }
+
+    const { error } = await supabase
+        .from('messages')
+        .insert({
+            conversation_id: conversationId,
+            sender_id: user.id,
+            message_type: 'image',
+            media_url: imageUrl
+        })
+
+    if (error) {
+        console.error('Error sending image message:', error)
+        return { error: "Erreur lors de l'envoi de l'image." }
+    }
+
+    // Update conversation last_message_at
+    await supabase
+        .from('conversations')
+        .update({ last_message_at: new Date().toISOString() })
+        .eq('id', conversationId)
+
+    return { success: true }
+}
+
+/**
+ * Send voice message
+ */
+export async function sendVoiceMessage(conversationId: string, audioBlob: Blob) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        return { error: "Vous devez être connecté." }
+    }
+
+    // Upload audio
+    const fileName = `${conversationId}/${user.id}_${Date.now()}.webm`
+    const { error: uploadError } = await supabase.storage
+        .from('message-media')
+        .upload(fileName, audioBlob)
+
+    if (uploadError) {
+        console.error('Error uploading voice:', uploadError)
+        return { error: "Erreur lors de l'upload du message vocal." }
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+        .from('message-media')
+        .getPublicUrl(fileName)
+
+    // Insert message
+    const { error } = await supabase
+        .from('messages')
+        .insert({
+            conversation_id: conversationId,
+            sender_id: user.id,
+            message_type: 'voice',
+            media_url: publicUrl
+        })
+
+    if (error) {
+        console.error('Error sending voice message:', error)
+        return { error: "Erreur lors de l'envoi du message vocal." }
+    }
+
+    // Update conversation
+    await supabase
+        .from('conversations')
+        .update({ last_message_at: new Date().toISOString() })
+        .eq('id', conversationId)
+
+    return { success: true }
+}
+
+/**
+ * Send meeting request
+ */
+export async function sendMeetingRequest(
+    conversationId: string,
+    meetingData: { date: string; time: string; location?: string; notes?: string }
+) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        return { error: "Vous devez être connecté." }
+    }
+
+    const { error } = await supabase
+        .from('messages')
+        .insert({
+            conversation_id: conversationId,
+            sender_id: user.id,
+            message_type: 'meeting',
+            meeting_data: meetingData
+        })
+
+    if (error) {
+        console.error('Error sending meeting request:', error)
+        return { error: "Erreur lors de l'envoi de la demande de rendez-vous." }
+    }
+
+    // Update conversation
+    await supabase
+        .from('conversations')
+        .update({ last_message_at: new Date().toISOString() })
+        .eq('id', conversationId)
+
+    return { success: true }
+}
