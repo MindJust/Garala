@@ -16,6 +16,73 @@ export function ImageUpload({ conversationId }: ImageUploadProps) {
     const [uploading, setUploading] = useState(false)
     const [preview, setPreview] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const { vibrate } = usePreferences()
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        console.log('Selected file:', file.name, file.type, file.size)
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            toast.error("Veuillez sélectionner une image")
+            return
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("L'image ne doit pas dépasser 5MB")
+            return
+        }
+
+        // Show preview
+        const reader = new FileReader()
+        reader.onload = (e) => {
+            setPreview(e.target?.result as string)
+        }
+        reader.readAsDataURL(file)
+
+        // Upload
+        setUploading(true)
+
+        try {
+            const result = await uploadMessageImage(conversationId, file)
+
+            if (result.error) {
+                console.error('Upload error:', result.error)
+                toast.error(result.error)
+                setPreview(null)
+                setUploading(false)
+                return
+            }
+
+            console.log('Upload successful, URL:', result.url)
+
+            // Send as message
+            const sendResult = await sendImageMessage(conversationId, result.url!)
+
+            if (sendResult.error) {
+                console.error('Send error:', sendResult.error)
+                toast.error(sendResult.error)
+            } else {
+                vibrate(20)
+                toast.success("Image envoyée")
+            }
+        } catch (error) {
+            console.error('Upload exception:', error)
+            toast.error("Erreur lors de l'upload")
+        }
+
+        setPreview(null)
+        setUploading(false)
+
+        // Reset input
+        if (fileInputRef.current) {
+            fileInputRef.current.value = ''
+        }
+    }
+
     const cancelUpload = () => {
         setPreview(null)
         if (fileInputRef.current) {
