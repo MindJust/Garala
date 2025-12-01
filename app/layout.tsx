@@ -11,9 +11,23 @@ import { Toaster } from "sonner";
 // });
 
 export const metadata: Metadata = {
-  title: "Garala - Tout se vend, tout s'achète",
-  description: "Plateforme de petites annonces en République Centrafricaine",
-  manifest: "/manifest.json",
+  title: "Garala - Petites annonces en Centrafrique",
+  description:
+    "Achetez et vendez facilement en République Centrafricaine. Trouvez des annonces locales pour immobilier, véhicules, électronique et plus.",
+  keywords: [
+    "petites annonces",
+    "Centrafrique",
+    "Bangui",
+    "vendre",
+    "acheter",
+    "immobilier",
+    "voitures",
+  ],
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
+  manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
