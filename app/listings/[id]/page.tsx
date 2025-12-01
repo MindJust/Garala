@@ -7,6 +7,11 @@ import { Button } from "@/components/ui/button"
 import { getCategoryLabel } from "@/lib/categories"
 import { ImageGallery } from "@/components/features/listings/image-gallery"
 import { ListingActions } from "@/components/features/listings/listing-actions"
+import { getListingReviews, getListingRating } from "@/components/features/reviews/reviews.actions"
+import { RatingDisplay } from "@/components/features/reviews/rating-display"
+import { AddReviewForm } from "@/components/features/reviews/add-review-form"
+import { ReviewsList } from "@/components/features/reviews/reviews-list"
+import { createClient } from "@/lib/supabase/server"
 
 export default async function ListingPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -20,6 +25,12 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
     // Check if current user is the owner
     const isOwner = await isListingOwner(id)
 
+    // Fetch reviews data
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    const reviews = await getListingReviews(id)
+    const rating = await getListingRating(id)
+
     return (
         <div className="container py-8 max-w-5xl">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -32,6 +43,22 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
                         <p className="whitespace-pre-wrap text-muted-foreground leading-relaxed">
                             {listing.description}
                         </p>
+                    </div>
+
+                    {/* Reviews Section */}
+                    <div className="space-y-6 pt-4 border-t">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-2xl font-bold">Avis et notes</h2>
+                            <RatingDisplay average={rating.average} count={rating.count} />
+                        </div>
+
+                        {/* Add Review Form (only for authenticated users who don't own the listing) */}
+                        {user && !isOwner && (
+                            <AddReviewForm listingId={id} />
+                        )}
+
+                        {/* Reviews List */}
+                        <ReviewsList reviews={reviews} currentUserId={user?.id} />
                     </div>
                 </div>
 
