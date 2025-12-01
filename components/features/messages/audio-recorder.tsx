@@ -39,121 +39,99 @@ export function AudioRecorder({ conversationId }: AudioRecorderProps) {
                 if (e.data.size > 0) {
                     chunksRef.current.push(e.data)
                 }
-            }
+                mediaRecorder.start()
+                setIsRecording(true)
+                vibrate(10)
 
-            mediaRecorder.onstop = async () => {
-                const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' })
-                stream.getTracks().forEach(track => track.stop())
+                // Start timer
+                let seconds = 0
+                timerRef.current = setInterval(() => {
+                    seconds++
+                    setDuration(seconds)
 
-                if (chunksRef.current.length > 0 && !sending) {
-                    setSending(true)
-                    const result = await sendVoiceMessage(conversationId, audioBlob)
-
-                    if (result.error) {
-                        toast.error(result.error)
-                    } else {
-                        vibrate(20)
+                    // Auto-stop at 60 seconds
+                    if (seconds >= 60) {
+                        stopRecording()
                     }
+                }, 1000)
 
-                    setSending(false)
-                }
-
-                setDuration(0)
+            } catch (error) {
+                console.error('Error accessing microphone:', error)
+                toast.error("Impossible d'accéder au microphone")
             }
-
-            mediaRecorder.start()
-            setIsRecording(true)
-            vibrate(10)
-
-            // Start timer
-            let seconds = 0
-            timerRef.current = setInterval(() => {
-                seconds++
-                setDuration(seconds)
-
-                // Auto-stop at 60 seconds
-                if (seconds >= 60) {
-                    stopRecording()
-                }
-            }, 1000)
-
-        } catch (error) {
-            console.error('Error accessing microphone:', error)
-            toast.error("Impossible d'accéder au microphone")
         }
-    }
 
     const stopRecording = () => {
-        if (mediaRecorderRef.current && isRecording) {
-            mediaRecorderRef.current.stop()
-            setIsRecording(false)
+            if (mediaRecorderRef.current && isRecording) {
+                mediaRecorderRef.current.stop()
+                setIsRecording(false)
 
-            if (timerRef.current) {
-                clearInterval(timerRef.current)
+                if (timerRef.current) {
+                    clearInterval(timerRef.current)
+                }
             }
         }
-    }
 
-    const cancelRecording = () => {
-        if (mediaRecorderRef.current && isRecording) {
-            chunksRef.current = [] // Clear chunks to prevent sending
-            mediaRecorderRef.current.stop()
-            setIsRecording(false)
-            setDuration(0)
+        const cancelRecording = () => {
+            if (mediaRecorderRef.current && isRecording) {
+                chunksRef.current = [] // Clear chunks to prevent sending
+                mediaRecorderRef.current.stop()
+                setIsRecording(false)
+                setDuration(0)
 
-            if (timerRef.current) {
-                clearInterval(timerRef.current)
+                if (timerRef.current) {
+                    clearInterval(timerRef.current)
+                }
             }
         }
-    }
 
-    const formatDuration = (seconds: number) => {
-        const mins = Math.floor(seconds / 60)
-        const secs = seconds % 60
-        return `${mins}:${secs.toString().padStart(2, '0')}`
-    }
+        const formatDuration = (seconds: number) => {
+            const mins = Math.floor(seconds / 60)
+            const secs = seconds % 60
+            return `${mins}:${secs.toString().padStart(2, '0')}`
+        }
 
-    if (isRecording) {
-        return (
-            <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg">
-                <div className="flex items-center gap-2 flex-1">
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                    <span className="text-sm font-mono">{formatDuration(duration)}</span>
+        if (isRecording) {
+            return (
+                <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg">
+                    <div className="flex items-center gap-2 flex-1">
+                        <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                        <span className="text-sm font-mono">{formatDuration(duration)}</span>
+                    </div>
+
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={cancelRecording}
+                        className="h-8 w-8"
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+
+                    <Button
+                        type="button"
+                        variant="default"
+                        size="icon"
+                        onClick={stopRecording}
+                        className="h-8 w-8"
+                    >
+                        <Square className="h-4 w-4" />
+                    </Button>
                 </div>
+            )
+        }
 
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={cancelRecording}
-                    className="h-8 w-8"
-                >
-                    <Trash2 className="h-4 w-4" />
-                </Button>
-
-                <Button
-                    type="button"
-                    variant="default"
-                    size="icon"
-                    onClick={stopRecording}
-                    className="h-8 w-8"
-                >
-                    <Square className="h-4 w-4" />
-                </Button>
-            </div>
+        return (
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={startRecording}
+                disabled={sending}
+                className="rounded-lg"
+            >
+                <Mic className="h-5 w-5" />
+            </Button>
         )
     }
-
-    return (
-        <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={startRecording}
-            disabled={sending}
-            className="rounded-lg"
-        >
-            <Mic className="h-5 w-5" />
-        </Button>
-    )
-}

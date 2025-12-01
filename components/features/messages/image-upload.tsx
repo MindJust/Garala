@@ -16,60 +16,6 @@ export function ImageUpload({ conversationId }: ImageUploadProps) {
     const [uploading, setUploading] = useState(false)
     const [preview, setPreview] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
-    const { vibrate } = usePreferences()
-
-    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (!file) return
-
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-            toast.error("Veuillez sélectionner une image")
-            return
-        }
-
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            toast.error("L'image ne doit pas dépasser 5MB")
-            return
-        }
-
-        // Show preview
-        const reader = new FileReader()
-        reader.onload = (e) => {
-            setPreview(e.target?.result as string)
-        }
-        reader.readAsDataURL(file)
-
-        // Upload
-        setUploading(true)
-        const result = await uploadMessageImage(conversationId, file)
-
-        if (result.error) {
-            toast.error(result.error)
-            setPreview(null)
-            setUploading(false)
-            return
-        }
-
-        // Send as message
-        const sendResult = await sendImageMessage(conversationId, result.url!)
-
-        if (sendResult.error) {
-            toast.error(sendResult.error)
-        } else {
-            vibrate(20)
-        }
-
-        setPreview(null)
-        setUploading(false)
-
-        // Reset input
-        if (fileInputRef.current) {
-            fileInputRef.current.value = ''
-        }
-    }
-
     const cancelUpload = () => {
         setPreview(null)
         if (fileInputRef.current) {
