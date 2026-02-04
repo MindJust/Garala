@@ -12,10 +12,22 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Métadonnées complètes pour le Web, Android et iOS
 export const metadata: Metadata = {
   title: "Garala Search",
   description: "Le moteur de recherche des annonces WhatsApp",
-  manifest: "/manifest.json", // Lien vers le manifest
+  manifest: "/manifest.json",
+  // Configuration spécifique pour iOS
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Garala Search",
+  },
+  // Icônes pour différents supports
+  icons: {
+    icon: "/web-app-manifest-192x192.png",
+    apple: "/web-app-manifest-192x192.png",
+  },
 };
 
 export default function RootLayout({
@@ -25,18 +37,26 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
+      <head>
+        {/* Couleur de la barre d'adresse sur mobile */}
+        <meta name="theme-color" content="#ea580c" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
 
-        {/* Script pour enregistrer le Service Worker (Score PWABuilder) */}
+        {/* Script pour enregistrer le Service Worker (Nécessaire pour PWA & Score PWABuilder) */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js');
+                  navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                  }, function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                  });
                 });
               }
             `,
