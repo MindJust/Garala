@@ -168,7 +168,7 @@ export default function Home() {
 
       {/* FOOTER */}
       <footer className="max-w-6xl mx-auto px-4 py-12 border-t text-center text-gray-400 text-sm">
-        <p>&copy; {new Date().getFullYear()} Garala Search - Le moteur de recherche WhatsApp.</p>
+        <p>&copy; {new Date().getFullYear()} Garala Search - Le moteur de recherche de vos groupes Whatsapp.</p>
       </footer>
     </div>
   );
