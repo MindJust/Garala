@@ -121,7 +121,7 @@ export default function Home() {
                 </span>
                 <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">
                     {/* Si peu d'annonces, on montre la fraicheur, sinon le volume */}
-                    {liveCount < 5 && lastAdTime ? `DERNIER SIGNAL : ${lastAdTime}` : `${liveCount} SIGNAUX LIVE`}
+                    {liveCount < 5 && lastAdTime ? `DERNIERE PUBLICATION : ${lastAdTime}` : `${liveCount} PUBLICATIONS LIVE`}
                 </span>
             </div>
           </div>
@@ -130,7 +130,7 @@ export default function Home() {
             <input 
               ref={searchInputRef}
               type="text" 
-              placeholder="QUOI ?" 
+              placeholder="VOUS RECHERCHEZ QUOI ?" 
               className="w-full text-4xl font-black border-none outline-none placeholder-gray-200 uppercase tracking-tighter"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -218,7 +218,7 @@ export default function Home() {
                             target="_blank"
                             className="block w-full bg-[#25D366] text-white text-center py-3 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[#128C7E] transition-colors mb-3"
                         >
-                            PRENDRE
+                            CONTACTER
                         </a>
                     ) : (
                         <div className="w-full bg-gray-100 text-gray-300 text-center py-3 text-[10px] font-black uppercase tracking-widest mb-3 cursor-not-allowed">Masqué</div>
@@ -247,7 +247,7 @@ export default function Home() {
       </main>
 
       <footer className="py-20 border-t border-gray-50 text-center">
-        <p className="text-[9px] font-black text-gray-200 uppercase tracking-[1em]">Infrastucture Garala</p>
+        <p className="text-[9px] font-black text-gray-200 uppercase tracking-[1em]">Garala</p>
       </footer>
       
       <style jsx global>{`
