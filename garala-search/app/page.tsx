@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
-// Structure de données
 interface Ad {
   id: number;
   title: string;
@@ -14,10 +13,7 @@ interface Ad {
   transaction_type: string;
   created_at: string;
   group_id: string;
-  groups: {
-    name: string;
-    id: string;
-  } | null;
+  groups: { name: string; id: string; } | null;
 }
 
 const CATEGORIES = ["TOUT", "TECH", "IMMO", "AUTO", "MODE", "MAISON", "SERVICES", "DIVERS"];
@@ -25,160 +21,115 @@ const CATEGORIES = ["TOUT", "TECH", "IMMO", "AUTO", "MODE", "MAISON", "SERVICES"
 export default function Home() {
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // --- ÉTATS DE FILTRES ---
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('TOUT');
   const [transactionFilter, setTransactionFilter] = useState('TOUT'); 
   const [sortOption, setSortOption] = useState('date_desc');
   const [selectedGroup, setSelectedGroup] = useState<{id: string, name: string} | null>(null);
 
-  // Fonction de récupération (mémorisée pour éviter les boucles)
   const fetchAds = useCallback(async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from('ads')
-        .select('*, groups(id, name)');
+      let query = supabase.from('ads').select('*, groups(id, name)');
 
-      // 1. Recherche Texte (Titre ou Description)
-      if (search.trim()) {
-        query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
-      }
+      if (search.trim()) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
+      if (selectedCategory !== 'TOUT') query = query.eq('category', selectedCategory);
+      if (selectedGroup) query = query.eq('group_id', selectedGroup.id);
+      
+      if (transactionFilter === 'VENTE') query = query.eq('transaction_type', 'VENTE');
+      else if (transactionFilter === 'RECHERCHE') query = query.or('transaction_type.ilike.ACHAT,transaction_type.ilike.RECHERCHE,transaction_type.ilike.DEMANDE');
 
-      // 2. Filtre Catégorie
-      if (selectedCategory !== 'TOUT') {
-        query = query.eq('category', selectedCategory);
-      }
-
-      // 3. Filtre Type de transaction (Ventes vs Demandes)
-      if (transactionFilter === 'VENTE') {
-        query = query.eq('transaction_type', 'VENTE');
-      } else if (transactionFilter === 'RECHERCHE') {
-        // Gère les différents termes que l'IA pourrait utiliser
-        query = query.or('transaction_type.ilike.ACHAT,transaction_type.ilike.RECHERCHE,transaction_type.ilike.DEMANDE');
-      }
-
-      // 4. Filtre Groupe (Mode Boutique)
-      if (selectedGroup) {
-        query = query.eq('group_id', selectedGroup.id);
-      }
-
-      // 5. Tris
-      if (sortOption === 'price_asc') {
-        query = query.order('price', { ascending: true });
-      } else if (sortOption === 'price_desc') {
-        query = query.order('price', { ascending: false });
-      } else {
-        query = query.order('created_at', { ascending: false });
-      }
+      // Tri de base par date pour Supabase
+      query = query.order('created_at', { ascending: false });
 
       const { data, error } = await query;
       if (error) throw error;
-      setAds((data as any[]) || []);
+
+      let processedAds = (data as Ad[]) || [];
+
+      // --- LOGIQUE DE TRI PREMIUM (0 à la fin) ---
+      processedAds.sort((a, b) => {
+        if (sortOption === 'price_asc') {
+          if (a.price === 0 && b.price !== 0) return 1;
+          if (a.price !== 0 && b.price === 0) return -1;
+          return a.price - b.price;
+        }
+        if (sortOption === 'price_desc') {
+          if (a.price === 0 && b.price !== 0) return 1;
+          if (a.price !== 0 && b.price === 0) return -1;
+          return b.price - a.price;
+        }
+        return 0; // Garder l'ordre chronologique de Supabase
+      });
+
+      setAds(processedAds);
     } catch (err) {
-      console.error("Erreur Supabase:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   }, [search, selectedCategory, transactionFilter, sortOption, selectedGroup]);
 
-  // Déclencheur automatique
-  useEffect(() => {
-    fetchAds();
-  }, [fetchAds]);
+  useEffect(() => { fetchAds(); }, [fetchAds]);
 
-  // Réinitialisation complète
   const resetFilters = () => {
-    setSearch('');
-    setSelectedCategory('TOUT');
-    setTransactionFilter('TOUT');
-    setSelectedGroup(null);
-    setSortOption('date_desc');
+    setSearch(''); setSelectedCategory('TOUT'); setTransactionFilter('TOUT');
+    setSelectedGroup(null); setSortOption('date_desc');
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans pb-20">
+    <div className="min-h-screen bg-[#F8F9FB] text-[#1A1C1E] font-sans pb-10">
       
-      {/* --- HEADER FIXE --- */}
-      <header className="bg-white border-b sticky top-0 z-20 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          
-          <div className="flex flex-col md:flex-row gap-4 mb-4">
-            <h1 
-              onClick={resetFilters}
-              className="text-2xl font-extrabold text-orange-600 tracking-tight cursor-pointer flex-shrink-0"
-            >
-              GARALA<span className="text-gray-800">SEARCH</span>
+      {/* --- NAV PREMIUM STICKY --- */}
+      <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-6 py-4">
+          <div className="flex flex-col md:flex-row items-center gap-5">
+            <h1 onClick={resetFilters} className="text-2xl font-black tracking-tighter cursor-pointer text-orange-600 italic">
+              GARALA<span className="text-slate-900 not-italic">.</span>
             </h1>
             
-            <div className="flex flex-col sm:flex-row flex-1 gap-2">
-              {/* BARRE DE RECHERCHE */}
-              <div className="flex flex-1 shadow-sm rounded-xl overflow-hidden border border-gray-200 bg-gray-50 relative">
+            <div className="flex-1 w-full flex items-center gap-3">
+              <div className="relative flex-1 group">
                 <input 
                   type="text" 
-                  placeholder="Rechercher..." 
-                  className="flex-1 p-3 bg-transparent outline-none text-black min-w-0 pr-20"
+                  placeholder="Rechercher l'exceptionnel..." 
+                  className="w-full pl-12 pr-12 py-3.5 bg-gray-100 rounded-2xl outline-none focus:bg-white focus:ring-2 focus:ring-orange-500/20 transition-all text-sm font-medium"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && fetchAds()}
                 />
-                
-                <div className="flex items-center absolute right-16 top-1/2 -translate-y-1/2 gap-1">
-                    {search && (
-                    <button 
-                        onClick={() => setSearch('')}
-                        className="text-gray-400 hover:text-orange-600 p-2 bg-white rounded-full shadow-sm"
-                    >
-                        ✕
-                    </button>
-                    )}
-                </div>
-
-                <select 
-                  className="bg-white border-l border-gray-200 px-2 text-sm text-gray-600 outline-none cursor-pointer"
-                  value={sortOption}
-                  onChange={(e) => setSortOption(e.target.value)}
-                >
-                  <option value="date_desc">🕒 Récents</option>
-                  <option value="price_asc">💰 Prix -</option>
-                  <option value="price_desc">💎 Prix +</option>
-                </select>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                {search && (
+                  <button onClick={() => setSearch('')} className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full text-[10px] transition-all">✕</button>
+                )}
               </div>
+              
+              <select 
+                className="hidden sm:block bg-gray-100 border-none rounded-2xl px-4 py-3.5 text-xs font-bold appearance-none cursor-pointer hover:bg-gray-200 transition-colors"
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value)}
+              >
+                <option value="date_desc">🕒 Nouveautés</option>
+                <option value="price_asc">💰 Prix Croissant</option>
+                <option value="price_desc">💎 Prix Décroissant</option>
+              </select>
 
-              {/* FILTRE VENTES / DEMANDES */}
-              <div className="flex bg-gray-100 rounded-xl p-1 shadow-inner border border-gray-200">
-                <button 
-                  onClick={() => setTransactionFilter('TOUT')}
-                  className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all ${transactionFilter === 'TOUT' ? 'bg-white text-black shadow-sm' : 'text-gray-400'}`}
-                >
-                  TOUT
-                </button>
-                <button 
-                  onClick={() => setTransactionFilter('VENTE')}
-                  className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all ${transactionFilter === 'VENTE' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-400'}`}
-                >
-                  VENTES
-                </button>
-                <button 
-                  onClick={() => setTransactionFilter('RECHERCHE')}
-                  className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all ${transactionFilter === 'RECHERCHE' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400'}`}
-                >
-                  DEMANDES
-                </button>
-              </div>
+              <button onClick={fetchAds} className="bg-slate-900 text-white px-6 py-3.5 rounded-2xl font-bold text-sm hover:bg-orange-600 transition-all shadow-lg shadow-slate-200">
+                Lancer
+              </button>
             </div>
           </div>
 
-          {/* BARRE DES CATÉGORIES */}
-          <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+          {/* BARRE CATEGORIES SANS BORDURES */}
+          <div className="flex overflow-x-auto gap-3 mt-5 no-scrollbar">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[11px] font-bold transition-all border ${
+                className={`whitespace-nowrap px-6 py-2.5 rounded-xl text-[11px] font-black transition-all ${
                   selectedCategory === cat 
-                    ? "bg-black text-white border-black shadow-md" 
-                    : "bg-white text-gray-500 border-gray-200 hover:border-orange-300"
+                    ? "bg-orange-600 text-white shadow-xl shadow-orange-100 scale-105" 
+                    : "bg-white text-gray-400 hover:text-slate-900 border border-gray-100"
                 }`}
               >
                 {cat}
@@ -186,119 +137,124 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </header>
+      </nav>
 
-      {/* BANNIÈRE BOUTIQUE */}
-      {selectedGroup && (
-        <div className="bg-orange-50 border-b border-orange-100">
-          <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
-            <p className="text-orange-800 text-sm font-bold flex items-center gap-2">
-              <span className="bg-orange-200 px-2 py-0.5 rounded text-lg">🏪</span>
-              Boutique : {selectedGroup.name}
-            </p>
-            <button 
-              onClick={() => setSelectedGroup(null)}
-              className="text-orange-600 text-[10px] font-black tracking-widest border-2 border-orange-200 px-3 py-1 rounded-full bg-white"
-            >
-              TOUS LES GROUPES ✕
-            </button>
+      {/* --- CAROUSEL "FEATURED" --- */}
+      {!search && selectedCategory === 'TOUT' && ads.length > 0 && (
+        <section className="max-w-6xl mx-auto px-6 mt-8">
+          <h2 className="text-[10px] font-black tracking-[0.2em] text-gray-400 uppercase mb-4">À la une</h2>
+          <div className="flex overflow-x-auto gap-4 no-scrollbar snap-x">
+            {ads.filter(a => a.image_url).slice(0, 5).map((ad) => (
+              <div 
+                key={`hero-${ad.id}`}
+                className="min-w-[85%] md:min-w-[45%] h-64 relative rounded-[2.5rem] overflow-hidden snap-center group cursor-pointer"
+                onClick={() => enterShop(ad.group_id, ad.groups?.name || 'Boutique')}
+              >
+                <img src={ad.image_url!} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6">
+                  <span className="text-[9px] font-black text-white/70 uppercase tracking-widest">{ad.category}</span>
+                  <h3 className="text-white text-xl font-bold line-clamp-1 uppercase">{ad.title}</h3>
+                  <p className="text-orange-400 font-bold text-sm mt-1">{ad.price > 0 ? `${ad.price.toLocaleString()} FCFA` : "Prix sur demande"}</p>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* GRILLE D'ANNONCES */}
-      <main className="max-w-6xl mx-auto px-4 py-6">
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6">
-          {loading ? "Recherche en cours..." : `${ads.length} résultat(s)`}
-        </p>
+      {/* --- FILTRES SECONDAIRES --- */}
+      <div className="max-w-6xl mx-auto px-6 mt-10 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-gray-100">
+          {['TOUT', 'VENTE', 'RECHERCHE'].map((t) => (
+            <button
+              key={t}
+              onClick={() => setTransactionFilter(t)}
+              className={`px-6 py-2 rounded-xl text-[10px] font-black transition-all ${
+                transactionFilter === t ? "bg-slate-900 text-white shadow-lg" : "text-gray-400 hover:text-slate-600"
+              }`}
+            >
+              {t === 'RECHERCHE' ? 'DEMANDES' : t}
+            </button>
+          ))}
+        </div>
+        {selectedGroup && (
+          <button onClick={() => setSelectedGroup(null)} className="bg-orange-100 text-orange-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tighter">
+            Boutique: {selectedGroup.name} ✕
+          </button>
+        )}
+      </div>
 
+      {/* --- GRID D'ANNONCES --- */}
+      <main className="max-w-6xl mx-auto px-6 mt-8">
         {loading ? (
-          <div className="flex flex-col justify-center items-center h-64 gap-4">
-            <div className="animate-spin rounded-full h-10 w-10 border-4 border-orange-100 border-t-orange-500"></div>
-            <p className="text-xs font-bold text-orange-400 animate-pulse uppercase">Chargement de Garala...</p>
+          <div className="flex flex-col items-center py-20 animate-pulse">
+            <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mb-4" />
+            <span className="text-[10px] font-black text-gray-400 tracking-[0.3em] uppercase">Chargement du catalogue</span>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
             {ads.map((ad) => {
               const isDemand = ad.transaction_type?.toUpperCase().includes('ACHAT') || ad.transaction_type?.toUpperCase().includes('RECHERCHE');
-              
               return (
-                <div key={ad.id} className="bg-white rounded-3xl shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 flex flex-col overflow-hidden group">
-                  
-                  {/* ZONE IMAGE */}
-                  <div className="relative h-64 bg-gray-50 overflow-hidden">
+                <div key={ad.id} className="group bg-white rounded-[2rem] overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] border border-gray-50 flex flex-col h-full">
+                  <div className="relative h-72 overflow-hidden">
                     {ad.image_url ? (
-                      <img 
-                        src={ad.image_url} 
-                        alt={ad.title} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                        loading="lazy"
-                      />
+                      <img src={ad.image_url} alt={ad.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                     ) : (
-                      <div className="flex items-center justify-center h-full text-gray-200 font-black text-4xl opacity-20 italic">GARALA</div>
+                      <div className="w-full h-full bg-slate-50 flex items-center justify-center text-[4rem] font-black text-slate-100 italic">G</div>
                     )}
-                    
-                    {/* Badge Catégorie */}
-                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-xl text-[9px] font-black text-orange-600 shadow-sm border border-orange-100 uppercase tracking-tighter">
+                    <div className="absolute top-5 left-5 px-4 py-1.5 bg-white/90 backdrop-blur rounded-full text-[9px] font-black text-slate-900 shadow-sm uppercase tracking-tighter border border-white/20">
                       {ad.category}
                     </div>
-
-                    {/* Badge Type (Vente vs Demande) */}
                     {isDemand && (
-                      <div className="absolute top-4 right-4 bg-blue-600 text-white text-[9px] font-black px-3 py-1 rounded-xl shadow-lg uppercase tracking-widest animate-pulse">
-                        DEMANDE
+                      <div className="absolute top-5 right-5 px-4 py-1.5 bg-blue-600 text-white rounded-full text-[9px] font-black shadow-lg uppercase tracking-widest animate-pulse">
+                        Demande
                       </div>
                     )}
                   </div>
 
-                  {/* ZONE INFOS */}
-                  <div className="p-6 flex-1 flex flex-col">
+                  <div className="p-7 flex-1 flex flex-col">
                     {ad.groups?.name && (
                       <button 
                         onClick={() => setSelectedGroup({id: ad.group_id, name: ad.groups!.name})}
-                        className="text-left mb-2 text-[9px] font-black text-orange-500 hover:text-orange-700 uppercase tracking-widest flex items-center gap-1"
+                        className="text-left mb-3 text-[9px] font-black text-orange-500 hover:text-orange-700 uppercase tracking-widest flex items-center gap-1"
                       >
-                        <span className="opacity-50">@</span>{ad.groups.name} ›
+                        <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-ping" /> {ad.groups.name}
                       </button>
                     )}
-
-                    <h3 className="text-lg font-bold text-gray-900 leading-tight mb-2 uppercase line-clamp-2 group-hover:text-orange-600 transition-colors">
+                    <h3 className="text-lg font-bold text-slate-900 leading-tight mb-2 line-clamp-2 uppercase group-hover:text-orange-600 transition-colors">
                       {ad.title}
                     </h3>
-                    
-                    <p className="text-gray-500 text-xs line-clamp-3 mb-6 flex-1 leading-relaxed">
+                    <p className="text-gray-400 text-xs line-clamp-3 mb-6 flex-1 leading-relaxed font-medium">
                       {ad.description}
                     </p>
                     
-                    <div className="pt-4 border-t border-gray-100 mt-auto">
-                      <div className="flex justify-between items-end mb-4">
-                        <div>
-                            <span className="block text-[8px] font-black text-gray-400 uppercase tracking-tighter mb-0.5">Prix indicatif</span>
-                            <span className="text-2xl font-black text-gray-900">
+                    <div className="pt-6 border-t border-gray-50 flex flex-col gap-4">
+                      <div className="flex justify-between items-end">
+                        <div className="flex flex-col">
+                          <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest">Estimation</span>
+                          <span className="text-2xl font-black text-slate-900 tracking-tighter">
                             {ad.price > 0 ? `${ad.price.toLocaleString()}` : "N.C."}
-                            {ad.price > 0 && <span className="text-[10px] font-bold text-gray-400 ml-1">FCFA</span>}
-                            </span>
+                            {ad.price > 0 && <span className="text-xs font-bold text-gray-400 ml-1">FCFA</span>}
+                          </span>
                         </div>
-                        <span className="text-[9px] font-bold text-gray-300">
+                        <span className="text-[9px] font-bold text-gray-300 bg-gray-50 px-2 py-1 rounded-md">
                           {new Date(ad.created_at).toLocaleDateString()}
                         </span>
                       </div>
                       
                       {ad.seller_phone ? (
                         <a 
-                          href={`https://wa.me/${ad.seller_phone}?text=${encodeURIComponent(
-                            `Bonjour! J'ai vu votre annonce sur Garala Search : *${ad.title.toUpperCase()}*. Est-elle toujours disponible ?`
-                          )}`} 
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block w-full bg-green-500 hover:bg-green-600 text-white text-center py-3.5 rounded-2xl font-black text-xs transition-all flex items-center justify-center gap-2 hover:gap-4 shadow-lg shadow-green-100"
+                          href={`https://wa.me/${ad.seller_phone}?text=${encodeURIComponent(`Bonjour ! J'ai repéré votre annonce sur Garala Search : *${ad.title.toUpperCase()}*. Est-elle toujours disponible ?`)}`} 
+                          target="_blank" rel="noopener noreferrer"
+                          className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white py-4 rounded-[1.2rem] font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-100 group-hover:scale-[1.02]"
                         >
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-                          WhatsApp
+                          Contacter le vendeur
                         </a>
                       ) : (
-                        <div className="bg-gray-100 text-gray-400 text-center py-3.5 rounded-2xl text-[9px] font-black tracking-widest uppercase cursor-not-allowed border border-gray-200">
-                          Numéro masqué
+                        <div className="w-full bg-gray-100 text-gray-400 text-center py-4 rounded-[1.2rem] text-[10px] font-black uppercase tracking-widest border border-gray-200/50">
+                          Identité masquée
                         </div>
                       )}
                     </div>
@@ -309,20 +265,27 @@ export default function Home() {
           </div>
         )}
 
-        {/* AUCUN RÉSULTAT */}
+        {/* --- ETAT VIDE --- */}
         {!loading && ads.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-[40px] border-4 border-dashed border-gray-100">
-            <p className="text-gray-300 text-6xl mb-4 font-black">∅</p>
-            <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">Aucune annonce trouvée</p>
-            <button 
-              onClick={resetFilters}
-              className="mt-6 bg-orange-100 text-orange-600 px-8 py-3 rounded-2xl text-xs font-black hover:bg-orange-600 hover:text-white transition-all uppercase tracking-widest"
-            >
-              Réinitialiser tout
+          <div className="flex flex-col items-center justify-center py-32 text-center bg-white rounded-[3rem] shadow-sm border border-gray-50">
+            <div className="text-6xl mb-6 opacity-20">🏝️</div>
+            <p className="text-gray-400 text-xs font-black uppercase tracking-[0.4em]">Le catalogue est vide</p>
+            <button onClick={resetFilters} className="mt-8 text-orange-600 text-[10px] font-black uppercase tracking-widest border-b-2 border-orange-200 pb-1 hover:border-orange-600 transition-all">
+              Réinitialiser l'expérience
             </button>
           </div>
         )}
       </main>
+
+      <footer className="max-w-6xl mx-auto px-6 py-20 text-center">
+        <p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.5em]">&copy; {new Date().getFullYear()} Garala Digital Identity. Crafted for Luxury Search.</p>
+      </footer>
+
+      {/* STYLE POUR CACHER LA SCROLLBAR */}
+      <style jsx global>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </div>
   );
 }
