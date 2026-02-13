@@ -3,6 +3,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "app.vercel.garala.twa",
-        "sha256_cert_fingerprints": ["0D:11:D8:D5:62:B5:82:83:66:46:54:D7:F8:22:6F:DD:2D:2F:6D:43:95:28:86:DC:F0:F5:E3:97:9B:65:82:43"]
+        "sha256_cert_fingerprints": ["BD:70:B1:99:91:F5:4F:69:65:33:8E:C3:24:35:24:AC:7D:50:B5:C7:FC:57:14:14:F0:C3:E2:97:C2:A7:B0:3A"]
       }
     }]
