@@ -24,26 +24,29 @@ export const viewport: Viewport = {
 
 // 2. CONFIGURATION SEO & METADATA
 export const metadata: Metadata = {
-  metadataBase: new URL('https://garala.vercel.app'), // Mets ton URL Vercel ici
+  metadataBase: new URL('https://garala.vercel.app'), 
   
+  // VÉRIFICATION GOOGLE SEARCH CONSOLE
+  verification: {
+    google: "R-F40Wosi7m-qwT_yfOlFF7H6Huc-jA3qgNODCdt348",
+  },
+
   title: {
     default: "Garala Search - Le Moteur de Recherche WhatsApp",
-    template: "%s | Garala Search", // Permettra d'avoir "iPhone 13 | Garala Search"
+    template: "%s | Garala Search",
   },
   
   description: "Trouvez facilement les produits, services et annonces partagés dans les groupes WhatsApp. Ventes, achats, immobilier, tech et plus encore.",
   
-  keywords: ["WhatsApp", "Annonces", "Vente", "Achat", "Togo", "Lomé", "Marketplace", "Occasion", "Recherche"],
+  keywords: ["WhatsApp", "Annonces", "Vente", "Achat", "RCA", "Bangui", "Marketplace", "Occasion", "Recherche"],
   
   authors: [{ name: "Garala Team" }],
   
-  // Configuration pour les robots Google
   robots: {
     index: true,
     follow: true,
   },
 
-  // Configuration PWA
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -51,13 +54,11 @@ export const metadata: Metadata = {
     title: "Garala",
   },
   
-  // Icônes
   icons: {
     icon: "/web-app-manifest-192x192.png",
     apple: "/web-app-manifest-192x192.png",
   },
 
-  // Affichage sur les réseaux sociaux (WhatsApp, FB)
   openGraph: {
     type: "website",
     locale: "fr_FR",
@@ -67,7 +68,7 @@ export const metadata: Metadata = {
     siteName: "Garala Search",
     images: [
       {
-        url: "/opengraph-image.png", // L'image qu'on a créée tout à l'heure
+        url: "/opengraph-image.png",
         width: 1200,
         height: 630,
         alt: "Garala Search Aperçu",
@@ -75,7 +76,6 @@ export const metadata: Metadata = {
     ],
   },
 
-  // Affichage sur Twitter/X
   twitter: {
     card: "summary_large_image",
     title: "Garala Search",
