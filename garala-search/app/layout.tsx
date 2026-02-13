@@ -26,9 +26,9 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL('https://garala.vercel.app'), 
   
-  // VÉRIFICATION GOOGLE SEARCH CONSOLE
+  // VÉRIFICATION GOOGLE SEARCH CONSOLE (MISE À JOUR)
   verification: {
-    google: "R-F40Wosi7m-qwT_yfOlFF7H6Huc-jA3qgNODCdt348",
+    google: "WRJf_Tddv1630DyuuVCHLY6Q2cq56261yzSLEHsPEL4",
   },
 
   title: {
