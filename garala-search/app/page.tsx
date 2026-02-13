@@ -11,16 +11,16 @@ interface Ad {
   category: string;
   image_url: string | null;
   seller_phone: string | null;
-  transaction_type: string;
+  transaction_type: string; // VENTE ou RECHERCHE
   created_at: string;
-  group_id: string; // ID du groupe pour le filtrage
+  group_id: string;
   groups: {
     name: string;
     id: string;
   } | null;
 }
 
-// Liste des catégories fixes (doit correspondre au worker)
+// Liste des catégories fixes
 const CATEGORIES = ["TOUT", "TECH", "IMMO", "AUTO", "MODE", "MAISON", "SERVICES", "DIVERS"];
 
 export default function Home() {
@@ -30,44 +30,46 @@ export default function Home() {
   // --- ÉTATS DE FILTRES ---
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('TOUT');
-  const [sortOption, setSortOption] = useState('date_desc'); // date_desc, price_asc, price_desc
+  const [transactionFilter, setTransactionFilter] = useState('TOUT'); // Nouveau filtre
+  const [sortOption, setSortOption] = useState('date_desc');
   const [selectedGroup, setSelectedGroup] = useState<{id: string, name: string} | null>(null);
 
-  // Recharger les annonces à chaque changement de filtre
   useEffect(() => {
     fetchAds();
-  }, [selectedCategory, sortOption, selectedGroup]); // Dépendances
+  }, [selectedCategory, sortOption, selectedGroup, transactionFilter]); // Ajout de transactionFilter
 
   async function fetchAds() {
     setLoading(true);
     
-    // 1. Base de la requête
     let query = supabase
       .from('ads')
       .select('*, groups(id, name)');
 
-    // 2. Filtre Recherche Texte
     if (search) {
       query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
     }
 
-    // 3. Filtre Catégorie
     if (selectedCategory !== 'TOUT') {
       query = query.eq('category', selectedCategory);
     }
 
-    // 4. Filtre Groupe (Mode Boutique)
+    // Nouveau filtre : Type de transaction
+    if (transactionFilter === 'VENTE') {
+      query = query.eq('transaction_type', 'VENTE'); // Ou 'OFFRE' selon ce que l'IA écrit
+    } else if (transactionFilter === 'RECHERCHE') {
+      // On cherche ce qui n'est pas une vente standard
+      query = query.or('transaction_type.eq.ACHAT,transaction_type.eq.RECHERCHE');
+    }
+
     if (selectedGroup) {
       query = query.eq('group_id', selectedGroup.id);
     }
 
-    // 5. Tris
     if (sortOption === 'price_asc') {
       query = query.order('price', { ascending: true });
     } else if (sortOption === 'price_desc') {
       query = query.order('price', { ascending: false });
     } else {
-      // Par défaut : Date décroissante
       query = query.order('created_at', { ascending: false });
     }
 
@@ -79,12 +81,7 @@ export default function Home() {
     setLoading(false);
   }
 
-  // Action quand on appuie sur Entrée ou le bouton chercher
-  const handleSearch = () => {
-    fetchAds();
-  };
-
-  // Action pour entrer dans une boutique
+  const handleSearch = () => fetchAds();
   const enterShop = (groupId: string, groupName: string) => {
     setSelectedGroup({ id: groupId, name: groupName });
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -97,7 +94,6 @@ export default function Home() {
       <header className="bg-white border-b sticky top-0 z-20 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-4">
           
-          {/* Logo + Recherche + Tri */}
           <div className="flex flex-col md:flex-row gap-4 mb-4">
             <h1 
               onClick={() => {setSelectedGroup(null); setSelectedCategory('TOUT'); setSearch('');}}
@@ -106,19 +102,29 @@ export default function Home() {
               GARALA<span className="text-gray-800">SEARCH</span>
             </h1>
             
-            <div className="flex flex-1 gap-2">
-              <div className="flex flex-1 shadow-sm rounded-xl overflow-hidden border border-gray-200">
+            <div className="flex flex-col sm:flex-row flex-1 gap-2">
+              <div className="flex flex-1 shadow-sm rounded-xl overflow-hidden border border-gray-200 bg-gray-50 relative">
                 <input 
                   type="text" 
                   placeholder="Rechercher..." 
-                  className="flex-1 p-3 outline-none text-black min-w-0"
+                  className="flex-1 p-3 bg-transparent outline-none text-black min-w-0 pr-10" // Padding right pour la croix
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                 />
-                {/* Menu de Tri Mobile/Desktop */}
+                
+                {/* BOUTON EFFACER (X) */}
+                {search && (
+                  <button 
+                    onClick={() => { setSearch(''); fetchAds(); }} // Efface et relance la recherche vide
+                    className="absolute right-12 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                  >
+                    ✕
+                  </button>
+                )}
+
                 <select 
-                  className="bg-gray-50 border-l border-gray-200 px-3 text-sm text-gray-600 outline-none cursor-pointer"
+                  className="bg-white border-l border-gray-200 px-3 text-sm text-gray-600 outline-none cursor-pointer"
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value)}
                 >
@@ -127,16 +133,38 @@ export default function Home() {
                   <option value="price_desc">💎 Prix +</option>
                 </select>
               </div>
+
+              {/* FILTRE TYPE (Ventes / Demandes) */}
+              <div className="flex bg-gray-100 rounded-xl p-1 shadow-inner w-full sm:w-auto">
+                <button 
+                  onClick={() => setTransactionFilter('TOUT')}
+                  className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-all ${transactionFilter === 'TOUT' ? 'bg-white text-black shadow' : 'text-gray-500'}`}
+                >
+                  TOUT
+                </button>
+                <button 
+                  onClick={() => setTransactionFilter('VENTE')}
+                  className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-all ${transactionFilter === 'VENTE' ? 'bg-white text-green-600 shadow' : 'text-gray-500'}`}
+                >
+                  VENTES
+                </button>
+                <button 
+                  onClick={() => setTransactionFilter('RECHERCHE')}
+                  className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-all ${transactionFilter === 'RECHERCHE' ? 'bg-white text-blue-600 shadow' : 'text-gray-500'}`}
+                >
+                  DEMANDES
+                </button>
+              </div>
+
               <button 
                 onClick={handleSearch}
-                className="bg-orange-500 hover:bg-orange-600 text-white px-4 rounded-xl font-bold transition-colors"
+                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-xl font-bold transition-colors shadow-sm"
               >
                 🔍
               </button>
             </div>
           </div>
 
-          {/* --- BARRE DE CATÉGORIES (Défilable) --- */}
           <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
             {CATEGORIES.map((cat) => (
               <button
@@ -157,7 +185,7 @@ export default function Home() {
 
       {/* --- BANNIÈRE MODE BOUTIQUE --- */}
       {selectedGroup && (
-        <div className="bg-orange-50 border-b border-orange-100">
+        <div className="bg-orange-50 border-b border-orange-100 animate-fade-in">
           <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
             <div className="flex items-center gap-2 text-orange-800">
               <span className="bg-orange-200 p-1 rounded">🏪</span>
@@ -188,10 +216,16 @@ export default function Home() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {ads.map((ad) => (
-              <div key={ad.id} className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300 border border-gray-100 flex flex-col overflow-hidden">
+              <div key={ad.id} className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300 border border-gray-100 flex flex-col overflow-hidden relative group">
                 
-                {/* IMAGE */}
-                <div className="relative h-56 bg-gray-100">
+                {/* Badge Type Transaction (Nouveau) */}
+                {ad.transaction_type !== 'VENTE' && (
+                  <div className="absolute top-3 right-3 z-10 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-md uppercase">
+                    {ad.transaction_type}
+                  </div>
+                )}
+
+                <div className="relative h-56 bg-gray-100 group-hover:opacity-95 transition-opacity">
                   {ad.image_url ? (
                     <img 
                       src={ad.image_url} 
@@ -200,8 +234,8 @@ export default function Home() {
                       loading="lazy"
                     />
                   ) : (
-                    <div className="flex items-center justify-center h-full text-gray-300">
-                      <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <div className="flex items-center justify-center h-full text-gray-300 bg-gray-50">
+                      <svg className="w-12 h-12 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                     </div>
                   )}
                   <div className="absolute top-3 left-3 bg-black/70 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-white uppercase">
@@ -209,9 +243,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* INFOS */}
                 <div className="p-4 flex-1 flex flex-col">
-                  {/* LIEN GROUPE CLIQUABLE */}
                   {ad.groups?.name && (
                     <button 
                       onClick={() => enterShop(ad.group_id, ad.groups!.name)}
@@ -247,7 +279,7 @@ export default function Home() {
                         )}`} 
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block w-full bg-green-500 hover:bg-green-600 text-white text-center py-2.5 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                        className="block w-full bg-green-500 hover:bg-green-600 text-white text-center py-2.5 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2 hover:shadow-md"
                       >
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
                         WhatsApp
@@ -271,7 +303,7 @@ export default function Home() {
             </div>
             <p className="text-gray-500 text-lg">Aucun résultat trouvé.</p>
             <button 
-              onClick={() => { setSearch(''); setSelectedCategory('TOUT'); setSelectedGroup(null); }}
+              onClick={() => { setSearch(''); setSelectedCategory('TOUT'); setSelectedGroup(null); setTransactionFilter('TOUT'); }}
               className="mt-2 text-orange-600 font-bold hover:underline text-sm"
             >
               Réinitialiser les filtres
@@ -279,6 +311,10 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      <footer className="max-w-6xl mx-auto px-4 py-12 border-t text-center text-gray-400 text-sm">
+        <p>&copy; {new Date().getFullYear()} Garala Search - Le moteur de recherche WhatsApp.</p>
+      </footer>
     </div>
   );
 }
