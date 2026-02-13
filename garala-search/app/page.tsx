@@ -27,6 +27,7 @@ export default function Home() {
   const [sortOption, setSortOption] = useState('date_desc');
   const [selectedGroup, setSelectedGroup] = useState<{id: string, name: string} | null>(null);
 
+  // --- LOGIQUE DE RÉCUPÉRATION ---
   const fetchAds = useCallback(async () => {
     setLoading(true);
     try {
@@ -39,7 +40,7 @@ export default function Home() {
       if (transactionFilter === 'VENTE') query = query.eq('transaction_type', 'VENTE');
       else if (transactionFilter === 'RECHERCHE') query = query.or('transaction_type.ilike.ACHAT,transaction_type.ilike.RECHERCHE,transaction_type.ilike.DEMANDE');
 
-      // Tri de base par date pour Supabase
+      // Tri de base par date
       query = query.order('created_at', { ascending: false });
 
       const { data, error } = await query;
@@ -47,7 +48,7 @@ export default function Home() {
 
       let processedAds = (data as Ad[]) || [];
 
-      // --- LOGIQUE DE TRI PREMIUM (0 à la fin) ---
+      // --- LOGIQUE DE TRI PREMIUM (0/N.C. à la fin) ---
       processedAds.sort((a, b) => {
         if (sortOption === 'price_asc') {
           if (a.price === 0 && b.price !== 0) return 1;
@@ -59,7 +60,7 @@ export default function Home() {
           if (a.price !== 0 && b.price === 0) return -1;
           return b.price - a.price;
         }
-        return 0; // Garder l'ordre chronologique de Supabase
+        return 0; 
       });
 
       setAds(processedAds);
@@ -72,9 +73,15 @@ export default function Home() {
 
   useEffect(() => { fetchAds(); }, [fetchAds]);
 
+  // --- ACTIONS ---
   const resetFilters = () => {
     setSearch(''); setSelectedCategory('TOUT'); setTransactionFilter('TOUT');
     setSelectedGroup(null); setSortOption('date_desc');
+  };
+
+  const enterShop = (groupId: string, groupName: string) => {
+    setSelectedGroup({ id: groupId, name: groupName });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -120,7 +127,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* BARRE CATEGORIES SANS BORDURES */}
           <div className="flex overflow-x-auto gap-3 mt-5 no-scrollbar">
             {CATEGORIES.map((cat) => (
               <button
@@ -139,7 +145,7 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* --- CAROUSEL "FEATURED" --- */}
+      {/* --- CAROUSEL HERO --- */}
       {!search && selectedCategory === 'TOUT' && ads.length > 0 && (
         <section className="max-w-6xl mx-auto px-6 mt-8">
           <h2 className="text-[10px] font-black tracking-[0.2em] text-gray-400 uppercase mb-4">À la une</h2>
@@ -150,7 +156,7 @@ export default function Home() {
                 className="min-w-[85%] md:min-w-[45%] h-64 relative rounded-[2.5rem] overflow-hidden snap-center group cursor-pointer"
                 onClick={() => enterShop(ad.group_id, ad.groups?.name || 'Boutique')}
               >
-                <img src={ad.image_url!} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                <img src={ad.image_url!} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" alt="" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                 <div className="absolute bottom-6 left-6 right-6">
                   <span className="text-[9px] font-black text-white/70 uppercase tracking-widest">{ad.category}</span>
@@ -190,7 +196,7 @@ export default function Home() {
         {loading ? (
           <div className="flex flex-col items-center py-20 animate-pulse">
             <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mb-4" />
-            <span className="text-[10px] font-black text-gray-400 tracking-[0.3em] uppercase">Chargement du catalogue</span>
+            <span className="text-[10px] font-black text-gray-400 tracking-[0.3em] uppercase">Chargement</span>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -217,7 +223,7 @@ export default function Home() {
                   <div className="p-7 flex-1 flex flex-col">
                     {ad.groups?.name && (
                       <button 
-                        onClick={() => setSelectedGroup({id: ad.group_id, name: ad.groups!.name})}
+                        onClick={() => enterShop(ad.group_id, ad.groups!.name)}
                         className="text-left mb-3 text-[9px] font-black text-orange-500 hover:text-orange-700 uppercase tracking-widest flex items-center gap-1"
                       >
                         <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-ping" /> {ad.groups.name}
@@ -246,7 +252,7 @@ export default function Home() {
                       
                       {ad.seller_phone ? (
                         <a 
-                          href={`https://wa.me/${ad.seller_phone}?text=${encodeURIComponent(`Bonjour ! J'ai repéré votre annonce sur Garala Search : *${ad.title.toUpperCase()}*. Est-elle toujours disponible ?`)}`} 
+                          href={`https://wa.me/${ad.seller_phone}?text=${encodeURIComponent(`Bonjour ! J'ai repéré votre annonce sur Garala Search : *${ad.title.toUpperCase()}* (${ad.price > 0 ? ad.price.toLocaleString() + ' FCFA' : 'Prix à discuter'}). Est-elle toujours disponible ?`)}`} 
                           target="_blank" rel="noopener noreferrer"
                           className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white py-4 rounded-[1.2rem] font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-100 group-hover:scale-[1.02]"
                         >
@@ -265,7 +271,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* --- ETAT VIDE --- */}
         {!loading && ads.length === 0 && (
           <div className="flex flex-col items-center justify-center py-32 text-center bg-white rounded-[3rem] shadow-sm border border-gray-50">
             <div className="text-6xl mb-6 opacity-20">🏝️</div>
@@ -278,10 +283,9 @@ export default function Home() {
       </main>
 
       <footer className="max-w-6xl mx-auto px-6 py-20 text-center">
-        <p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.5em]">&copy; {new Date().getFullYear()} Garala Digital Identity. Crafted for Luxury Search.</p>
+        <p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.5em]">&copy; {new Date().getFullYear()} Garala Search.</p>
       </footer>
 
-      {/* STYLE POUR CACHER LA SCROLLBAR */}
       <style jsx global>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
