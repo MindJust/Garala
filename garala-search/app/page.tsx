@@ -10,11 +10,6 @@ interface Ad {
   groups: { name: string; id: string; } | null;
 }
 
-interface CategoryStat {
-  category: string;
-  count: number;
-}
-
 const CATEGORIES_LIST = ["TECH", "IMMO", "AUTO", "MODE", "MAISON", "SERVICES", "DIVERS"];
 
 export default function Home() {
@@ -25,6 +20,7 @@ export default function Home() {
   const [liveCount, setLiveCount] = useState(0);
   const [catStats, setCatStats] = useState<Record<string, number>>({});
   
+  // États pour l'Axe 4 (Veille de Tension)
   const [showAlertForm, setShowAlertForm] = useState(false);
   const [userPhone, setUserPhone] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -36,13 +32,10 @@ export default function Home() {
   }, []);
 
   const fetchSystemSignals = async () => {
-    // Calcul des annonces des dernières 24h
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    
     const { count } = await supabase.from('ads').select('*', { count: 'exact', head: true }).gt('created_at', yesterday);
     setLiveCount(count || 0);
 
-    // Stats par catégorie pour la Grille de Tension
     const stats: Record<string, number> = {};
     for (const cat of CATEGORIES_LIST) {
       const { count: c } = await supabase.from('ads').select('*', { count: 'exact', head: true }).eq('category', cat).gt('created_at', yesterday);
@@ -51,7 +44,24 @@ export default function Home() {
     setCatStats(stats);
   };
 
-  // 2. DICTIONNAIRE DE RÉSONANCE (Lissage Sémantique)
+  // 2. RÉSOLUTION DE LA VEILLE (AXE 4)
+  const createScarcityAlert = async () => {
+    if (!userPhone || !search) return;
+    try {
+      const { error } = await supabase.from('scarcity_alerts').insert([
+        { query: search.toLowerCase(), user_phone: userPhone }
+      ]);
+      if (error) throw error;
+      alert("TRAQUE ACTIVÉE. Garala vous contactera dès que ce signal apparaît.");
+      setShowAlertForm(false);
+      setUserPhone('');
+    } catch (e) {
+      console.error(e);
+      alert("Erreur lors de l'activation de la veille.");
+    }
+  };
+
+  // 3. DICTIONNAIRE DE RÉSONANCE (Lissage Sémantique)
   const resolveSynonyms = async (term: string) => {
     const cleanTerm = term.toLowerCase().trim();
     const { data } = await supabase.from('search_synonyms').select('target').eq('term', cleanTerm).single();
@@ -69,7 +79,7 @@ export default function Home() {
       let query = supabase.from('ads').select('*, groups(id, name)');
 
       if (resolvedSearch.trim()) {
-        // Axe 1 : Recherche Tolérante (Utilise l'index Trigramme via SQL)
+        // Utilise l'index Trigramme configuré en SQL pour la tolérance aux fautes
         query = query.or(`title.ilike.%${resolvedSearch}%,description.ilike.%${resolvedSearch}%`);
       }
 
@@ -90,9 +100,9 @@ export default function Home() {
   useEffect(() => { fetchAds(); }, [fetchAds]);
 
   return (
-    <div className="min-h-screen bg-white text-black font-sans selection:bg-orange-100">
+    <div className="min-h-screen bg-white text-black font-sans antialiased selection:bg-orange-100">
       
-      {/* --- LE POINT DE FOCALISATION --- */}
+      {/* --- LE POINT DE FOCALISATION (RADAR) --- */}
       <header className="pt-12 px-6 pb-6 border-b border-gray-50 sticky top-0 z-30 bg-white/95 backdrop-blur-md">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-8">
@@ -112,8 +122,8 @@ export default function Home() {
             <input 
               ref={searchInputRef}
               type="text" 
-              placeholder="Chercher une moto, un iPhone, un frigo..." 
-              className="w-full text-3xl md:text-5xl font-black border-none outline-none placeholder-gray-100 uppercase tracking-tighter"
+              placeholder="QUEL PRODUIT ?" 
+              className="w-full text-3xl md:text-5xl font-black border-none outline-none placeholder-gray-200 uppercase tracking-tighter text-black"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -124,7 +134,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* --- GRILLE DE TENSION (CHIPS) --- */}
           <div className="flex gap-3 mt-8 overflow-x-auto no-scrollbar pb-2">
             <button
                 onClick={() => setSelectedCategory('TOUT')}
@@ -165,14 +174,12 @@ export default function Home() {
                     <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-gray-100 uppercase italic">Garala Signal</div>
                   )}
                   
-                  {/* Surimpression Thermique du Prix */}
                   <div className="absolute bottom-0 right-0 bg-black text-white px-3 py-1.5 font-black text-sm md:text-lg tracking-tighter">
                     {ad.price > 0 ? ad.price.toLocaleString() : '---'}
                   </div>
 
-                  {/* Heat Badge */}
                   {ad.clicks_count > 5 && (
-                    <div className="absolute top-2 left-2 bg-orange-600 text-white text-[7px] font-black px-1.5 py-0.5 uppercase">Haute Tension</div>
+                    <div className="absolute top-2 left-2 bg-orange-600 text-white text-[7px] font-black px-1.5 py-0.5 uppercase shadow-xl">Haute Tension</div>
                   )}
                 </Link>
 
@@ -214,9 +221,10 @@ export default function Home() {
                     value={userPhone} 
                     onChange={(e) => setUserPhone(e.target.value)} 
                     placeholder="TON WHATSAPP" 
-                    className="w-full bg-transparent border-b-4 border-black p-4 text-center text-2xl font-black outline-none mb-8 uppercase" 
+                    className="w-full bg-transparent border-b-4 border-black p-4 text-center text-2xl font-black outline-none mb-8 uppercase text-black" 
                 />
                 <button onClick={createScarcityAlert} className="w-full bg-black text-white py-5 text-xs font-black uppercase tracking-widest">Bipez-moi au premier signal</button>
+                <button onClick={() => setShowAlertForm(false)} className="mt-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Annuler</button>
               </div>
             )}
           </div>
