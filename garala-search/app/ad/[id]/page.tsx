@@ -29,6 +29,19 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
     try { await supabase.rpc('increment_clicks', { row_id: ad.id }); } catch (e) {}
   };
 
+  // --- AXE 3 : GÉNÉRATEUR DE MUNITION HAUTE-PRESSION ---
+  const fireMunition = () => {
+    if (!ad) return;
+    const shareText = `🔥 *TOP AFFAIRE SUR GARALA SEARCH* 🔍\n\n📦 *PRODUIT :* ${ad.title.toUpperCase()}\n💰 *PRIX :* ${ad.price > 0 ? ad.price.toLocaleString() + ' FCFA' : 'À DISCUTER'}\n📍 *SOURCE :* ${ad.groups?.name || 'WhatsApp'}\n\n👉 *VOIR LES PHOTOS ET DÉTAILS ICI :*\n${window.location.origin}/ad/${ad.id}\n\n_Garala : Le réflexe pour tout trouver._`;
+
+    if (navigator.share) {
+      navigator.share({ title: ad.title, text: shareText }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(shareText);
+      alert("MUNITION COPIÉE. Collez-la dans vos groupes WhatsApp.");
+    }
+  };
+
   if (loading) return <div className="min-h-screen bg-white flex items-center justify-center"><div className="w-10 h-10 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div></div>;
 
   if (!ad) return (
@@ -38,15 +51,20 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
     </div>
   );
 
-  const whatsappUrl = `https://wa.me/${ad.seller_phone}?text=${encodeURIComponent(`Bonjour, je vous contacte via Garala pour votre annonce : *${ad.title.toUpperCase()}*. Est-elle disponible ?`)}`;
+  const whatsappUrl = `https://wa.me/${ad.seller_phone}?text=${encodeURIComponent(`Bonjour, je vous contacte via Garala pour : *${ad.title.toUpperCase()}*. Est-il disponible ?`)}`;
 
   return (
-    <div className="min-h-screen bg-white text-black font-sans antialiased pb-32">
+    <div className="min-h-screen bg-white text-black font-sans antialiased pb-40">
       {/* 1. L'IMAGE : 50% DU VIEWPORT */}
       <div className="relative w-full h-[50vh] bg-gray-50">
-        <Link href="/" className="absolute top-6 left-6 z-20 bg-white/90 backdrop-blur w-10 h-10 flex items-center justify-center rounded-full shadow-xl">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7"/></svg>
-        </Link>
+        <div className="absolute top-6 left-6 right-6 z-20 flex justify-between">
+            <Link href="/" className="bg-white/90 backdrop-blur w-10 h-10 flex items-center justify-center rounded-full shadow-xl">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7"/></svg>
+            </Link>
+            <button onClick={fireMunition} className="bg-white/90 backdrop-blur w-10 h-10 flex items-center justify-center rounded-full shadow-xl text-orange-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+            </button>
+        </div>
         {ad.image_url ? (
           <img src={ad.image_url} alt={ad.title} className="w-full h-full object-cover" />
         ) : (
@@ -61,11 +79,11 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
           <span className="text-[10px] font-bold text-gray-300 uppercase">{new Date(ad.created_at).toLocaleDateString()}</span>
         </div>
 
-        <h1 className="text-2xl font-black uppercase leading-tight mb-4 tracking-tighter">
+        <h1 className="text-3xl font-black uppercase leading-tight mb-4 tracking-tighter">
           {ad.title}
         </h1>
 
-        <div className="text-5xl font-black tracking-tighter mb-8">
+        <div className="text-6xl font-black tracking-tighter mb-8 text-black">
           {ad.price > 0 ? ad.price.toLocaleString() : '---'} <span className="text-sm font-bold text-gray-400">FCFA</span>
         </div>
 
@@ -73,13 +91,13 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
         <div className="mb-10">
           <Link 
             href={`/category/${ad.category.toLowerCase()}`}
-            className="inline-block bg-gray-100 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all"
+            className="inline-block bg-black text-white px-4 py-2 text-[8px] font-black uppercase tracking-[0.2em] hover:bg-orange-600 transition-all"
           >
-            Voir plus de {ad.category} à Bangui ›
+            VOIR PLUS DE {ad.category} ›
           </Link>
         </div>
 
-        <div className="border-t border-gray-100 pt-8 mb-10">
+        <div className="border-t border-gray-100 pt-8 mb-10 text-justify">
           <p className="text-gray-600 font-medium leading-relaxed whitespace-pre-wrap text-lg">
             {ad.description}
           </p>
@@ -87,27 +105,35 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
 
         {/* FEEDBACK DE TENSION */}
         {ad.clicks_count > 0 && (
-          <div className="flex items-center gap-3 text-orange-600 bg-orange-50 p-4 rounded-2xl border border-orange-100">
+          <div className="flex items-center gap-3 text-orange-600 bg-orange-50 p-4 rounded-xl border border-orange-100">
             <span className="animate-bounce">🔥</span>
-            <p className="text-xs font-black uppercase tracking-widest">{ad.clicks_count} intéressés</p>
+            <p className="text-[10px] font-black uppercase tracking-widest">{ad.clicks_count} PERSONNES SUR LE COUP</p>
           </div>
         )}
       </main>
 
-      {/* 4. LE LEVIER : BOUTON STICKY MASSIIF */}
-      <div className="fixed bottom-0 left-0 w-full p-4 bg-white/80 backdrop-blur-md border-t border-gray-100 z-30">
+      {/* 4. LE LEVIER : ACCÉLÉRATEUR STICKY */}
+      <div className="fixed bottom-0 left-0 w-full p-4 bg-white/95 backdrop-blur-md border-t border-gray-50 z-30 flex flex-col gap-2">
         {ad.seller_phone ? (
-          <a 
-            href={whatsappUrl}
-            onClick={registerClick}
-            target="_blank"
-            className="block w-full bg-[#25D366] text-white text-center py-5 rounded-2xl font-black text-lg shadow-2xl uppercase tracking-widest active:scale-95 transition-transform"
-          >
-            Contacter le vendeur
-          </a>
+          <>
+            <a 
+                href={whatsappUrl}
+                onClick={registerClick}
+                target="_blank"
+                className="block w-full bg-[#25D366] text-white text-center py-5 rounded-xl font-black text-lg uppercase tracking-widest active:scale-95 transition-transform"
+            >
+                PRENDRE SUR WHATSAPP
+            </a>
+            <button 
+                onClick={fireMunition}
+                className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-400 hover:text-black py-2"
+            >
+                Propager le signal 🚀
+            </button>
+          </>
         ) : (
-          <div className="w-full bg-gray-100 text-gray-400 text-center py-5 rounded-2xl font-black text-lg uppercase">
-            Numéro Masqué
+          <div className="w-full bg-gray-100 text-gray-300 text-center py-6 rounded-xl font-black text-lg uppercase">
+            NUMÉRO MASQUÉ
           </div>
         )}
       </div>
