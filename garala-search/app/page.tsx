@@ -33,7 +33,7 @@ export default function Home() {
   const [sortOption, setSortOption] = useState('date_desc');
   const [selectedGroup, setSelectedGroup] = useState<{id: string, name: string} | null>(null);
 
-  // Fonction de récupération (mémorisée pour éviter les boucles)
+  // Fonction de récupération et de logging
   const fetchAds = useCallback(async () => {
     setLoading(true);
     try {
@@ -51,11 +51,10 @@ export default function Home() {
         query = query.eq('category', selectedCategory);
       }
 
-      // 3. Filtre Type de transaction (Ventes vs Demandes)
+      // 3. Filtre Type de transaction
       if (transactionFilter === 'VENTE') {
         query = query.eq('transaction_type', 'VENTE');
       } else if (transactionFilter === 'RECHERCHE') {
-        // Gère les différents termes que l'IA pourrait utiliser
         query = query.or('transaction_type.ilike.ACHAT,transaction_type.ilike.RECHERCHE,transaction_type.ilike.DEMANDE');
       }
 
@@ -75,7 +74,21 @@ export default function Home() {
 
       const { data, error } = await query;
       if (error) throw error;
-      setAds((data as any[]) || []);
+      
+      const results = (data as any[]) || [];
+      setAds(results);
+
+      // --- 📊 LOGGING DES RECHERCHES (KPI) ---
+      // On n'enregistre que si l'utilisateur a tapé quelque chose
+      if (search.trim().length > 1) {
+        await supabase.from('search_logs').insert([
+          { 
+            query: search.trim().toLowerCase(), 
+            results_count: results.length 
+          }
+        ]);
+      }
+
     } catch (err) {
       console.error("Erreur Supabase:", err);
     } finally {
@@ -83,10 +96,10 @@ export default function Home() {
     }
   }, [search, selectedCategory, transactionFilter, sortOption, selectedGroup]);
 
-  // Déclencheur automatique
+  // Déclencheur automatique pour les changements de filtres (sauf recherche texte directe)
   useEffect(() => {
     fetchAds();
-  }, [fetchAds]);
+  }, [selectedCategory, transactionFilter, sortOption, selectedGroup]);
 
   // Réinitialisation complète
   const resetFilters = () => {
@@ -121,12 +134,13 @@ export default function Home() {
                   className="flex-1 p-3 bg-transparent outline-none text-black min-w-0 pr-20"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && fetchAds()}
                 />
                 
                 <div className="flex items-center absolute right-16 top-1/2 -translate-y-1/2 gap-1">
                     {search && (
                     <button 
-                        onClick={() => setSearch('')}
+                        onClick={() => { setSearch(''); }}
                         className="text-gray-400 hover:text-orange-600 p-2 bg-white rounded-full shadow-sm"
                     >
                         ✕
@@ -166,6 +180,13 @@ export default function Home() {
                   DEMANDES
                 </button>
               </div>
+
+              <button 
+                onClick={fetchAds}
+                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-xl font-bold transition-colors shadow-sm"
+              >
+                🔍
+              </button>
             </div>
           </div>
 
@@ -323,6 +344,10 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      <footer className="max-w-6xl mx-auto px-4 py-12 border-t text-center text-gray-400 text-sm">
+        <p>&copy; {new Date().getFullYear()} Garala Search - Le moteur de recherche WhatsApp.</p>
+      </footer>
     </div>
   );
 }
