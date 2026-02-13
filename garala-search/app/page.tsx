@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import Link from 'next/link'; // Nécessaire pour la navigation SEO
 
 interface Ad {
   id: number;
@@ -13,7 +14,7 @@ interface Ad {
   transaction_type: string;
   created_at: string;
   group_id: string;
-  clicks_count: number; // Axe 4 : Tension sociale
+  clicks_count: number;
   groups: { name: string; id: string; } | null;
 }
 
@@ -28,25 +29,21 @@ export default function Home() {
   const [sortOption, setSortOption] = useState('date_desc');
   const [selectedGroup, setSelectedGroup] = useState<{id: string, name: string} | null>(null);
 
-  // --- AXE 4 : ENREGISTRER LA TENSION (CLIC) ---
   const registerClick = async (adId: number) => {
     try {
       await supabase.rpc('increment_clicks', { row_id: adId }); 
-      // Note: Crée la fonction RPC increment_clicks en SQL si besoin (voir bas de page)
     } catch (e) {
-      // Échec silencieux pour ne pas bloquer l'utilisateur
-      await supabase.from('ads').update({ clicks_count: ads.find(a => a.id === adId)!.clicks_count + 1 }).eq('id', adId);
+      console.error("Erreur Tension:", e);
     }
   };
 
-  // --- AXE 3 : PARTAGE DE MUNITION ---
   const shareAd = (ad: Ad) => {
-    const text = `🔥 Bonne affaire sur Garala Search !\n\n📦 *${ad.title.toUpperCase()}*\n💰 Prix : ${ad.price.toLocaleString()} FCFA\n\nVoir l'annonce ici : ${window.location.origin}/?id=${ad.id}`;
+    const text = `🔥 Bonne affaire sur Garala Search !\n\n📦 *${ad.title.toUpperCase()}*\n💰 Prix : ${ad.price.toLocaleString()} FCFA\n\nVoir l'annonce ici : ${window.location.origin}/ad/${ad.id}`;
     if (navigator.share) {
-      navigator.share({ title: ad.title, text: text, url: window.location.href });
+      navigator.share({ title: ad.title, text: text, url: `${window.location.origin}/ad/${ad.id}` });
     } else {
       navigator.clipboard.writeText(text);
-      alert("Annonce copiée ! Prêt à être partagé sur WhatsApp.");
+      alert("Lien de l'annonce copié !");
     }
   };
 
@@ -56,7 +53,6 @@ export default function Home() {
       let query = supabase.from('ads').select('*, groups(id, name)');
 
       if (search.trim()) {
-        // Axe 1 : Recherche tolérante (on cherche dans titre et description)
         query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
       }
 
@@ -89,7 +85,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-[#1A1A1A] font-sans">
       
-      {/* --- TOP BAR (SIGNAL PUR) --- */}
+      {/* --- HEADER --- */}
       <header className="bg-white border-b sticky top-0 z-30 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row gap-4">
@@ -98,7 +94,7 @@ export default function Home() {
             </h1>
             
             <div className="flex flex-1 gap-2">
-              <div className="flex flex-1 bg-gray-100 rounded-2xl border border-transparent focus-within:border-orange-500 transition-all relative overflow-hidden">
+              <div className="flex flex-1 bg-gray-100 rounded-2xl border border-transparent focus-within:border-orange-500 transition-all relative overflow-hidden text-black">
                 <input 
                   type="text" 
                   placeholder="Quoi ?" 
@@ -111,12 +107,13 @@ export default function Home() {
                 )}
               </div>
               <select 
-                className="bg-gray-100 rounded-2xl px-4 font-bold text-xs outline-none border-none cursor-pointer"
+                className="bg-gray-100 rounded-2xl px-4 font-bold text-xs outline-none border-none cursor-pointer text-gray-700"
                 value={sortOption}
                 onChange={(e) => setSortOption(e.target.value)}
               >
                 <option value="date_desc">RÉCENTS</option>
                 <option value="price_asc">PRIX ↓</option>
+                <option value="price_desc">PRIX ↑</option>
               </select>
             </div>
           </div>
@@ -137,26 +134,26 @@ export default function Home() {
         </div>
       </header>
 
-      {/* --- GRID (SKELETON DE SIGNAL) --- */}
+      {/* --- GRID --- */}
       <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {ads.map((ad) => (
             <div key={ad.id} className="bg-white rounded-[2rem] overflow-hidden border border-gray-100 hover:shadow-2xl transition-all duration-500 flex flex-col group relative">
               
-              {/* Image & Tension */}
-              <div className="relative h-64 bg-gray-50 overflow-hidden">
+              {/* Image : Devient un lien vers la page de détails */}
+              <Link href={`/ad/${ad.id}`} className="relative h-64 bg-gray-50 overflow-hidden block">
                 {ad.image_url ? (
                   <img src={ad.image_url} alt={ad.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 ) : (
-                  <div className="flex items-center justify-center h-full text-gray-200 font-bold italic text-2xl">NO IMAGE</div>
+                  <div className="flex items-center justify-center h-full text-gray-200 font-bold italic text-2xl">GARALA</div>
                 )}
-                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest">{ad.category}</div>
+                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest text-black">{ad.category}</div>
                 {ad.clicks_count > 0 && (
-                  <div className="absolute bottom-4 left-4 bg-orange-500 text-white px-3 py-1 rounded-full text-[8px] font-black animate-bounce shadow-lg">
+                  <div className="absolute bottom-4 left-4 bg-orange-500 text-white px-3 py-1 rounded-full text-[8px] font-black shadow-lg">
                     🔥 {ad.clicks_count} INTÉRESSÉS
                   </div>
                 )}
-              </div>
+              </Link>
 
               <div className="p-6 flex-1 flex flex-col">
                 <div className="flex justify-between items-start mb-1">
@@ -168,11 +165,16 @@ export default function Home() {
                   </button>
                 </div>
 
-                <h3 className="text-md font-bold text-gray-900 leading-tight mb-4 uppercase line-clamp-2">{ad.title}</h3>
+                {/* Titre : Devient un lien vers la page de détails */}
+                <Link href={`/ad/${ad.id}`}>
+                    <h3 className="text-md font-bold text-gray-900 leading-tight mb-4 uppercase line-clamp-2 hover:text-orange-600 transition-colors">
+                        {ad.title}
+                    </h3>
+                </Link>
                 
                 <div className="mt-auto border-t border-gray-50 pt-4 flex flex-col gap-4">
                   <div className="flex justify-between items-end">
-                    <span className="text-2xl font-black tracking-tighter">
+                    <span className="text-2xl font-black tracking-tighter text-black">
                       {ad.price > 0 ? ad.price.toLocaleString() : '---'} <span className="text-xs font-bold text-gray-400">FCFA</span>
                     </span>
                   </div>
