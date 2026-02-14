@@ -197,7 +197,7 @@ export default function Home() {
                           <span className="truncate flex-1 mr-2">@{ad.groups?.name || 'WhatsApp'}</span>
                           {ad.clicks_count > 0 && <span className="text-orange-600 font-black">🔥 {ad.clicks_count}</span>}
                       </div>
-                      <a href={`https://wa.me/${ad.seller_phone}?text=INTÉRÊT : *${ad.title.toUpperCase()}*`} onClick={() => registerClick(ad.id)} target="_blank" className="block w-full bg-[#25D366] text-white text-center py-3 text-[10px] font-black uppercase tracking-[0.2em]">WHATSAPP</a>
+                      <a href={`https://wa.me/${ad.seller_phone}?text=${encodeURIComponent("Bonjour, je vous contacte pour l'annonce *" + ad.title + "* vue sur Garala.")}`} onClick={() => registerClick(ad.id)} target="_blank" className="block w-full bg-[#25D366] text-white text-center py-3 text-[10px] font-black uppercase tracking-[0.2em]">WHATSAPP</a>
                     </div>
                   </div>
                 );
