@@ -178,7 +178,7 @@ export default function Home() {
                       {ad.image_url ? (
                         <img src={ad.image_url} alt={ad.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center p-4 text-center text-[10px] font-black uppercase text-gray-200 italic">No Image</div>
+                        <div className="w-full h-full flex items-center justify-center p-4 text-center text-[10px] font-black uppercase text-gray-200 italic">PAS D'IMAGE</div>
                       )}
                       <div className="absolute bottom-0 right-0 bg-black text-white px-3 py-1 font-black text-sm tracking-tighter">
                         {ad.price > 0 ? ad.price.toLocaleString() : 'N.C'}
@@ -190,7 +190,7 @@ export default function Home() {
                           <span>@{ad.groups?.name?.slice(0, 10) || 'WhatsApp'}</span>
                           {ad.clicks_count > 0 && <span className="text-orange-600 font-black">🔥 {ad.clicks_count}</span>}
                       </div>
-                      <a href={`https://wa.me/${ad.seller_phone}?text=INTÉRÊT : *${ad.title.toUpperCase()}*`} onClick={() => registerClick(ad.id)} target="_blank" className="block w-full bg-[#25D366] text-white text-center py-3 text-[10px] font-black uppercase tracking-[0.2em]">PRENDRE</a>
+                      <a href={`https://wa.me/${ad.seller_phone}?text=INTÉRÊT : *${ad.title.toUpperCase()}*`} onClick={() => registerClick(ad.id)} target="_blank" className="block w-full bg-[#25D366] text-white text-center py-3 text-[10px] font-black uppercase tracking-[0.2em]">WHATSAPP</a>
                     </div>
                   </div>
                 );
@@ -211,7 +211,7 @@ export default function Home() {
                     </div>
                     <div className="text-right flex flex-col gap-2">
                        <p className="text-sm font-black tracking-tighter">{ad.price > 0 ? `${ad.price.toLocaleString()} F` : 'N.C'}</p>
-                       <a href={`https://wa.me/${ad.seller_phone}`} onClick={() => registerClick(ad.id)} target="_blank" className="bg-[#25D366] text-white px-4 py-2 text-[8px] font-black uppercase tracking-widest">PRENDRE</a>
+                       <a href={`https://wa.me/${ad.seller_phone}`} onClick={() => registerClick(ad.id)} target="_blank" className="bg-[#25D366] text-white px-4 py-2 text-[8px] font-black uppercase tracking-widest">WHATSAPP</a>
                     </div>
                   </div>
                 );
