@@ -176,7 +176,7 @@ export default function Home() {
           <div className={selectedMacro === "PRODUIT" ? "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3" : "flex flex-col gap-3"}>
             {ads.map((ad) => {
               const isProduit = selectedMacro === "PRODUIT";
-              const hideTitle = ['TECH', 'MODE', 'AUTO'].includes(ad.category) && ad.image_url; 
+              const hideTitle = false; 
 
               if (isProduit) {
                 return (
