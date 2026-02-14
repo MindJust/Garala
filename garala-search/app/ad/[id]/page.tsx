@@ -29,7 +29,6 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
     try { await supabase.rpc('increment_clicks', { row_id: ad.id }); } catch (e) {}
   };
 
-  // --- AXE 3 : GÉNÉRATEUR DE MUNITION HAUTE-PRESSION ---
   const fireMunition = () => {
     if (!ad) return;
     const shareText = `🔥 *TOP AFFAIRE SUR GARALA SEARCH* 🔍\n\n📦 *PRODUIT :* ${ad.title.toUpperCase()}\n💰 *PRIX :* ${ad.price > 0 ? ad.price.toLocaleString() + ' FCFA' : 'À DISCUTER'}\n📍 *SOURCE :* ${ad.groups?.name || 'WhatsApp'}\n\n👉 *VOIR LES PHOTOS ET DÉTAILS ICI :*\n${window.location.origin}/ad/${ad.id}\n\n_Garala : Le réflexe pour tout trouver._`;
@@ -51,10 +50,34 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
     </div>
   );
 
+  // --- TRAJECTOIRE A : INJECTION DU SCHÉMA DE DONNÉES STRUCTURÉES (INVISIBLE UI) ---
+  const jsonLd = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": ad.title,
+    "image": ad.image_url,
+    "description": ad.description,
+    "sku": ad.id.toString(),
+    "offers": {
+      "@type": "Offer",
+      "url": typeof window !== 'undefined' ? window.location.href : '',
+      "priceCurrency": "XAF",
+      "price": ad.price,
+      "itemCondition": "https://schema.org/UsedCondition",
+      "availability": "https://schema.org/InStock"
+    }
+  };
+
   const whatsappUrl = `https://wa.me/${ad.seller_phone}?text=${encodeURIComponent(`Bonjour, je vous contacte via Garala pour : *${ad.title.toUpperCase()}*. Est-il disponible ?`)}`;
 
   return (
     <div className="min-h-screen bg-white text-black font-sans antialiased pb-40">
+      {/* Script SEO invisible pour Google */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* 1. L'IMAGE : 50% DU VIEWPORT */}
       <div className="relative w-full h-[50vh] bg-gray-50">
         <div className="absolute top-6 left-6 right-6 z-20 flex justify-between">
