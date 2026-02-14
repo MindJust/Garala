@@ -13,18 +13,17 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
   const { id } = use(params);
   const [ad, setAd] = useState<Ad | null>(null);
   const [loading, setLoading] = useState(true);
-  const [captureSpeed, setCaptureSpeed] = useState<string>("2.4s"); // Simulation de la vitesse du Démon
+  const [captureSpeed, setCaptureSpeed] = useState<string>("2.1s");
 
   useEffect(() => {
     const fetchAd = async () => {
-      // On récupère les détails de l'annonce
       const { data, error } = await supabase
         .from('ads').select('*, groups(name)').eq('id', id).single();
-      if (!error) {
+      if (!error && data) {
         setAd(data);
-        // Calcul factice mais cohérent de la latence d'indexation pour la tension
-        const speed = (2.1 + Math.random()).toFixed(1);
-        setCaptureSpeed(`${speed}s`);
+        // Simulation de la latence d'indexation (Axe Vision)
+        const randomSpeed = (1.8 + Math.random() * 0.9).toFixed(1);
+        setCaptureSpeed(`${randomSpeed}s`);
       }
       setLoading(false);
     };
@@ -57,20 +56,23 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
     </div>
   );
 
-  // SEO : DONNÉES STRUCTURÉES AMÉLIORÉES
+  // --- TRAJECTOIRE A : DONNÉES STRUCTURÉES AVANCÉES (SEO PREDICTIF) ---
   const jsonLd = {
     "@context": "https://schema.org/",
     "@type": "Product",
     "name": ad.title,
     "image": ad.image_url,
     "description": ad.description,
-    "brand": { "@type": "Brand", "name": "Occasion" },
+    "sku": `GARALA-${ad.id}`,
+    "brand": { "@type": "Brand", "name": "Garala WhatsApp" },
     "offers": {
       "@type": "Offer",
+      "url": typeof window !== 'undefined' ? window.location.href : '',
       "priceCurrency": "XAF",
       "price": ad.price,
+      "itemCondition": "https://schema.org/UsedCondition",
       "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/UsedCondition"
+      "areaServed": "Bangui, RCA"
     }
   };
 
@@ -78,10 +80,14 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
 
   return (
     <div className="min-h-screen bg-white text-black font-sans antialiased pb-40 overflow-x-hidden">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {/* Script SEO invisible pour Google */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
-      {/* 1. L'IMAGE : PINCH-TO-ZOOM ACTIVÉ */}
-      <div className="relative w-full h-[50vh] bg-gray-50 overflow-hidden cursor-zoom-in">
+      {/* 1. L'IMAGE : OPTIMISÉE POUR L'INSPECTION (PINCH-TO-ZOOM) */}
+      <div className="relative w-full h-[50vh] bg-gray-50 overflow-hidden">
         <div className="absolute top-6 left-6 right-6 z-20 flex justify-between">
             <Link href="/" className="bg-white/90 backdrop-blur w-10 h-10 flex items-center justify-center rounded-full shadow-xl">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7"/></svg>
@@ -94,20 +100,21 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
           <img 
             src={ad.image_url} 
             alt={ad.title} 
-            className="w-full h-full object-cover active:scale-150 transition-transform duration-300 touch-pan-y" 
+            className="w-full h-full object-cover active:scale-150 transition-transform duration-300 cursor-zoom-in touch-none" 
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-200 font-black italic text-4xl">GARALA</div>
         )}
       </div>
 
+      {/* 2. LE SIGNAL : DÉTAILS CRITIQUES */}
       <main className="p-6 max-w-2xl mx-auto">
         <div className="flex justify-between items-center mb-2">
           <span className="text-[10px] font-black uppercase tracking-widest text-orange-500">@{ad.groups?.name || 'WhatsApp'}</span>
           <div className="flex flex-col items-end">
             <span className="text-[10px] font-bold text-gray-300 uppercase">{new Date(ad.created_at).toLocaleDateString()}</span>
-            {/* MUTATION DE TENSION : VITESSE DE CAPTURE */}
-            <span className="text-[8px] font-black text-green-500 uppercase tracking-tighter">Signal indexé en {captureSpeed}</span>
+            {/* SIGNAL DE VITESSE (TA) */}
+            <span className="text-[7px] font-black text-green-500 uppercase tracking-tighter italic">Signal indexé en {captureSpeed}</span>
           </div>
         </div>
 
@@ -142,6 +149,7 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
         )}
       </main>
 
+      {/* 4. LE LEVIER : ACCÉLÉRATEUR STICKY */}
       <div className="fixed bottom-0 left-0 w-full p-4 bg-white/95 backdrop-blur-md border-t border-gray-50 z-30 flex flex-col gap-2">
         {ad.seller_phone ? (
           <>
@@ -157,7 +165,7 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
                 onClick={fireMunition}
                 className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-400 hover:text-black py-2"
             >
-                Partager l'annonce 🚀
+                Propager le signal 🚀
             </button>
           </>
         ) : (
