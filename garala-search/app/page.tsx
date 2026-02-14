@@ -234,7 +234,7 @@ export default function Home() {
       </main>
 
       <footer className="py-20 border-t border-gray-50 text-center">
-        <p className="text-[9px] font-black text-gray-200 uppercase tracking-[1em]">OS ÉCONOMIE INFORMELLE RCA</p>
+        <p className="text-[9px] font-black text-gray-200 uppercase tracking-[1em]">GARALA - RCA</p>
       </footer>
       
       <style jsx global>{`
