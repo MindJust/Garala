@@ -112,7 +112,7 @@ export default function Home() {
       <header className="pt-8 px-4 border-b border-gray-100 sticky top-0 z-30 bg-white/95 backdrop-blur-md">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <h1 onClick={() => {setSearch(''); setSelectedMacro('PRODUITS'); setSelectedSub('TOUT');}} className="text-xl font-black tracking-tighter cursor-pointer uppercase">GARALA.</h1>
+            <h1 onClick={() => {setSearch(''); setSelectedMacro('PRODUIT'); setSelectedSub('TOUT');}} className="text-xl font-black tracking-tighter cursor-pointer uppercase">GARALA.</h1>
             <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>
                 <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">
@@ -148,7 +148,7 @@ export default function Home() {
           </div>
 
           {/* AXE 2 : SOUS-CATÉGORIES PRODUITS */}
-          {selectedMacro === "PRODUITS" && (
+          {selectedMacro === "PRODUIT" && (
             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-4">
               <button onClick={() => setSelectedSub('TOUT')} className={`px-4 py-1 text-[9px] font-black uppercase tracking-widest border-b-2 transition-all ${selectedSub === 'TOUT' ? "border-black text-black" : "border-transparent text-gray-300"}`}>TOUT</button>
               {PRODUITS_SUB.map((sub) => (
@@ -169,7 +169,7 @@ export default function Home() {
         {loading ? (
           <div className="w-full h-1 bg-gray-50 overflow-hidden"><div className="w-1/3 h-full bg-orange-600 animate-progress"></div></div>
         ) : ads.length > 0 ? (
-          <div className={selectedMacro === "PRODUITS" ? "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3" : "flex flex-col gap-3"}>
+          <div className={selectedMacro === "PRODUIT" ? "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3" : "flex flex-col gap-3"}>
             {ads.map((ad) => {
               const isProduit = selectedMacro === "PRODUIT";
               const hideTitle = ['TECH', 'MODE', 'AUTO'].includes(ad.category) && ad.image_url; 
