@@ -187,7 +187,7 @@ export default function Home() {
                     <div className="p-3">
                       {!hideTitle && <h3 className="text-[10px] font-bold leading-tight uppercase line-clamp-2 mb-2 h-8">{ad.title}</h3>}
                       <div className="flex justify-between items-center text-[8px] font-bold text-gray-400 uppercase tracking-wide mb-3">
-                          <span>@{ad.groups?.name?.slice(0, 10) || 'WhatsApp'}</span>
+                          <span className="truncate flex-1 mr-2">@{ad.groups?.name || 'WhatsApp'}</span>
                           {ad.clicks_count > 0 && <span className="text-orange-600 font-black">🔥 {ad.clicks_count}</span>}
                       </div>
                       <a href={`https://wa.me/${ad.seller_phone}?text=INTÉRÊT : *${ad.title.toUpperCase()}*`} onClick={() => registerClick(ad.id)} target="_blank" className="block w-full bg-[#25D366] text-white text-center py-3 text-[10px] font-black uppercase tracking-[0.2em]">WHATSAPP</a>
