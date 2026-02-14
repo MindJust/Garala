@@ -17,7 +17,7 @@ export default function ShadowDashboard() {
     const { data: catTrends } = await supabase.from('category_trends').select('*');
     const { data: groupPerf } = await supabase.from('group_performance').select('*');
     
-    // 2. MONITEUR DE SANTÉ IA (Axe 4 - Maxwell's Monitor)
+    // 2. MONITEUR DE SANTÉ IA (Maxwell's Monitor)
     const { data: aiHealth } = await supabase.from('ai_health_monitor').select('*');
 
     // 3. Gisements de Demande (0 Résultats) & Traques
@@ -32,14 +32,14 @@ export default function ShadowDashboard() {
       .order('created_at', { ascending: false })
       .limit(10);
 
-    // 4. Analyse des Failles Sémantiques
+    // 4. Analyse des Failles Sémantiques (Mots sans synonymes)
     const { data: existingSynonyms } = await supabase.from('search_synonyms').select('term');
     const synonymTerms = existingSynonyms?.map(s => s.term) || [];
     
     const gaps = deadSearches
       ?.map(s => s.query)
       .filter(q => !synonymTerms.includes(q))
-      .filter((v, i, a) => a.indexOf(v) === i);
+      .filter((v, i, a) => a.indexOf(v) === i); // Unicité
 
     setStats({
       totalAds: adsCount?.length || 0,
@@ -121,17 +121,17 @@ export default function ShadowDashboard() {
 
       <main className="p-6 md:p-10 max-w-7xl mx-auto">
         
-        {/* SECTION : SANTÉ DU CERVEAU (Démon de Maxwell) */}
+        {/* MONITEUR DE SANTÉ IA (Diagnostic Cerveau) */}
         <section className="mb-12">
             <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500 mb-6 flex items-center gap-2">
-                <span className="w-2 h-2 bg-green-500 rounded-full"></span> État de Santé IA (24h)
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span> Santé du Flux IA (24h)
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {['PENDING', 'PROCESSED', 'ERROR', 'IGNORED'].map(status => {
                     const healthData = stats.health.find((h:any) => h.status === status);
                     return (
-                        <div key={status} className="bg-[#0A0A0A] p-5 border border-white/5 rounded-2xl">
-                            <p className="text-[8px] font-black text-gray-600 uppercase mb-2 tracking-widest">{status}</p>
+                        <div key={status} className="bg-[#0A0A0A] p-5 border border-white/5 rounded-2xl group">
+                            <p className="text-[8px] font-black text-gray-600 uppercase mb-2 tracking-widest group-hover:text-white transition-colors">{status}</p>
                             <p className={`text-3xl font-black ${status === 'ERROR' ? 'text-red-600' : status === 'PROCESSED' ? 'text-green-500' : 'text-white'}`}>
                                 {healthData?.count || 0}
                             </p>
@@ -141,14 +141,14 @@ export default function ShadowDashboard() {
             </div>
         </section>
 
-        {/* INDICATEURS DE MASSE */}
+        {/* STATS DE MASSE */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
           <div className="bg-[#0A0A0A] border border-white/5 p-6 rounded-2xl">
             <p className="text-[8px] font-black text-gray-600 uppercase mb-2 tracking-widest">Signaux Indexés</p>
             <p className="text-4xl font-black text-white leading-none">{stats.totalAds}</p>
           </div>
           <div className="bg-[#0A0A0A] border border-white/5 p-6 rounded-2xl">
-            <p className="text-[8px] font-black text-gray-600 uppercase mb-2 tracking-widest">Faille Sémantique</p>
+            <p className="text-[8px] font-black text-gray-600 uppercase mb-2 tracking-widest">Failles Sémantiques</p>
             <p className="text-4xl font-black text-red-600 leading-none">{semanticGaps.length}</p>
           </div>
           <div className="bg-[#0A0A0A] border border-white/5 p-6 rounded-2xl">
@@ -163,17 +163,20 @@ export default function ShadowDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           
-          {/* TRAJECTOIRE B : GISEMENTS DE VOCABULAIRE */}
+          {/* GISEMENTS DE VOCABULAIRE (Semantic Gaps) */}
           <section>
             <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500 mb-6 flex items-center gap-2">
               <span className="w-2 h-2 bg-red-600 rounded-full animate-ping"></span> Gisements de Vocabulaire (Gaps)
             </h2>
             <div className="bg-[#0A0A0A] rounded-2xl border border-white/5 overflow-hidden">
+                <div className="p-4 border-b border-white/5 bg-white/5 text-[8px] font-black text-gray-500 uppercase tracking-widest">
+                    Mots cherchés sans synonymes définis
+                </div>
                 <div className="divide-y divide-white/5">
                     {semanticGaps.map((gap) => (
                         <div key={gap} className="p-4 flex justify-between items-center group hover:bg-white/5 transition-all">
                             <span className="font-bold text-red-500 uppercase text-sm tracking-tighter">{gap}</span>
-                            <span className="text-[8px] font-black text-gray-700 uppercase tracking-widest">Action requise ›</span>
+                            <span className="text-[8px] font-black text-gray-700 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Mapper au dictionnaire ›</span>
                         </div>
                     ))}
                     {semanticGaps.length === 0 && <p className="p-10 text-center text-[10px] text-gray-800 font-black uppercase italic">Dictionnaire de résonance complet.</p>}
@@ -181,43 +184,46 @@ export default function ShadowDashboard() {
             </div>
           </section>
 
-          {/* TRAJECTOIRE B : MATCH-MAKING */}
+          {/* CONSOLE DE MATCH-MAKING (Brokerage) */}
           <section>
             <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500 mb-6 flex items-center gap-2">
-              <span className="w-2 h-2 bg-blue-600 rounded-full"></span> Radar de Traque & Courtage
+              <span className="w-2 h-2 bg-blue-600 rounded-full"></span> Radar de Traque & Match-making
             </h2>
             <div className="space-y-3">
               {stats.alerts.map((alert: any) => (
-                <div key={alert.id} className="bg-[#0A0A0A] p-6 border border-white/5 rounded-2xl hover:border-blue-600/30 transition-all">
+                <div key={alert.id} className="bg-[#0A0A0A] p-6 border border-white/5 rounded-2xl hover:border-blue-600/30 transition-all group">
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <p className="font-black text-blue-400 uppercase text-lg tracking-tighter">{alert.query}</p>
-                      <p className="text-[9px] text-gray-600 font-mono mt-1">CLIENT : {alert.user_phone}</p>
+                      <p className="text-[9px] text-gray-600 font-mono mt-1 tracking-widest uppercase">CLIENT : {alert.user_phone}</p>
                     </div>
                   </div>
-                  <a 
-                    href={`https://wa.me/${alert.user_phone}?text=${encodeURIComponent(`Bonjour, vous traquez : *${alert.query.toUpperCase()}*. Bonne nouvelle, on vient de détecter un signal correspondant sur Garala !`)}`} 
-                    target="_blank" 
-                    className="block w-full bg-blue-600 text-white text-center py-3 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-blue-700 transition-all"
-                  >
-                    Notifier le client
-                  </a>
+                  
+                  <div className="flex gap-2">
+                    <a 
+                      href={`https://wa.me/${alert.user_phone}?text=${encodeURIComponent(`Bonjour, vous traquez : *${alert.query.toUpperCase()}*. On vient de trouver un signal correspondant sur Garala !`)}`} 
+                      target="_blank" 
+                      className="flex-1 bg-blue-600 text-white text-center py-3 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-blue-700 transition-all"
+                    >
+                      Avertir le client
+                    </a>
+                  </div>
                 </div>
               ))}
             </div>
           </section>
 
-          {/* MATRICE DE SYMBIOSE */}
+          {/* MATRICE DE SYMBIOSE DES GROUPES */}
           <section className="lg:col-span-2 mt-10">
             <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500 mb-6">Matrice de Symbiose</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {stats.groups.map((g: any) => (
                 <div key={g.name} className="bg-[#0A0A0A] p-6 border border-white/5 rounded-2xl flex flex-col justify-between hover:border-orange-600/30 transition-all group">
                   <div>
-                    <h3 className="font-black uppercase text-sm mb-1 group-hover:text-orange-500 transition-colors">{g.name || 'SANS_NOM'}</h3>
-                    <div className="flex gap-6 mt-4">
-                      <div><p className="text-[8px] text-gray-600 font-black uppercase tracking-tighter">Flux</p><p className="text-2xl font-black">{g.total_ads}</p></div>
-                      <div><p className="text-[8px] text-gray-600 font-black uppercase tracking-tighter">Impact</p><p className="text-2xl font-black text-green-500">{g.total_clicks}</p></div>
+                    <h3 className="font-black uppercase text-sm mb-1 group-hover:text-orange-500 transition-colors tracking-tight">{g.name || 'SANS_NOM'}</h3>
+                    <div className="flex gap-6 mt-4 border-t border-white/5 pt-4">
+                      <div><p className="text-[8px] text-gray-600 font-black uppercase tracking-tighter">Flux Capté</p><p className="text-2xl font-black">{g.total_ads}</p></div>
+                      <div><p className="text-[8px] text-gray-600 font-black uppercase tracking-tighter">Engagement</p><p className="text-2xl font-black text-green-500">{g.total_clicks}</p></div>
                     </div>
                   </div>
                   <button 
@@ -235,7 +241,7 @@ export default function ShadowDashboard() {
       </main>
 
       <footer className="p-20 text-center border-t border-white/5">
-         <p className="text-[8px] font-mono text-gray-800 uppercase tracking-[1em]">Infrastructure • Garala • Singularité</p>
+         <p className="text-[8px] font-mono text-gray-800 uppercase tracking-[1em]">Infrastructure • Garala • Singularité • V2.1</p>
       </footer>
     </div>
   );
