@@ -13,10 +13,10 @@ interface Ad {
 
 // Axe 2 : Macro-Flux (Blueprint V4)
 const MACRO_FLUX = [
-  { id: "PRODUITS", label: "PRODUITS", icon: "📦" },
-  { id: "SERVICES", label: "SERVICES", icon: "🛠️" },
-  { id: "EMPLOIS", label: "EMPLOIS", icon: "🎓" },
-  { id: "ÉVÉNEMENTS", label: "ÉVÉNEMENTS", icon: "📅" }
+  { id: "PRODUIT", label: "PRODUITS", icon: "📦" },
+  { id: "SERVICE", label: "SERVICES", icon: "🛠️" },
+  { id: "EMPLOI", label: "EMPLOIS", icon: "🎓" },
+  { id: "ÉVÉNEMENT", label: "ÉVÉNEMENTS", icon: "📅" }
 ];
 
 const PRODUITS_SUB = ["TECH", "IMMO", "AUTO", "MODE", "MAISON", "DIVERS"];
@@ -27,7 +27,7 @@ export default function Home() {
   const [search, setSearch] = useState('');
   
   // États V4
-  const [selectedMacro, setSelectedMacro] = useState('PRODUITS');
+  const [selectedMacro, setSelectedMacro] = useState('PRODUIT');
   const [selectedSub, setSelectedSub] = useState('TOUT');
   
   const [liveCount, setLiveCount] = useState(0);
@@ -83,14 +83,18 @@ export default function Home() {
       }
 
       // Filtrage Macro-Flux (Axe 2)
-      if (selectedMacro === "PRODUITS") {
+      // --- LOGIQUE DE FILTRAGE V4 (CORRIGÉE) ---
+      if (selectedMacro === "PRODUIT") {
         if (selectedSub !== "TOUT") {
           query = query.eq('category', selectedSub);
         } else {
-          query = query.not('category', 'in', '("SERVICES","EMPLOIS","ÉVÉNEMENTS")');
+          // Utilisation d'un tableau pour le filtre 'in' (Syntaxe correcte Supabase JS)
+          query = query.not('category', 'in', ['SERVICE', 'SERVICES', 'EMPLOI', 'EMPLOIS', 'ÉVÉNEMENT', 'ÉVÉNEMENTS']);
         }
       } else {
-        query = query.eq('category', selectedMacro);
+        // Pour les autres, on cherche le terme exact ou son pluriel
+        const plural = selectedMacro + 'S';
+        query = query.or(`category.eq.${selectedMacro},category.eq.${plural}`);
       }
       
       query = query.order('created_at', { ascending: false }).limit(50);
@@ -167,7 +171,7 @@ export default function Home() {
         ) : ads.length > 0 ? (
           <div className={selectedMacro === "PRODUITS" ? "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3" : "flex flex-col gap-3"}>
             {ads.map((ad) => {
-              const isProduit = selectedMacro === "PRODUITS";
+              const isProduit = selectedMacro === "PRODUIT";
               const hideTitle = ['TECH', 'MODE', 'AUTO'].includes(ad.category) && ad.image_url; 
 
               if (isProduit) {
