@@ -55,6 +55,7 @@ export default function Home() {
 
   const resolveSynonyms = async (term: string) => {
     const cleanTerm = term.toLowerCase().trim();
+    if (!cleanTerm) return term;
     const { data } = await supabase.from('search_synonyms').select('target').eq('term', cleanTerm).single();
     return data ? data.target : term;
   };
@@ -92,10 +93,9 @@ export default function Home() {
           query = query.not('category', 'in', ['SERVICE', 'SERVICES', 'EMPLOI', 'EMPLOIS', 'ÉVÉNEMENT', 'ÉVÉNEMENTS']);
         }
       } else {
-        // Pour les autres, on cherche le terme exact ou son pluriel
-        const plural = selectedMacro + 'S';
-        query = query.or(`category.eq.${selectedMacro},category.eq.${plural}`);
-      }
+          // Utilisation d'une chaîne formatée pour éviter l'erreur 400 de Postgrest
+          query = query.not('category', 'in', '(SERVICE,SERVICES,EMPLOI,EMPLOIS,ÉVÉNEMENT,ÉVÉNEMENTS)');
+        }
       
       query = query.order('created_at', { ascending: false }).limit(50);
       const { data } = await query;
