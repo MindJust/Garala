@@ -11,7 +11,7 @@ interface Ad {
   groups: { name: string; id: string; } | null;
 }
 
-// Axe 2 : Définition des Macro-Flux
+// Axe 2 : Macro-Flux (Blueprint V4)
 const MACRO_FLUX = [
   { id: "PRODUITS", label: "PRODUITS", icon: "📦" },
   { id: "SERVICES", label: "SERVICES", icon: "🛠️" },
@@ -26,7 +26,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   
-  // États de navigation Blueprint V4
+  // États V4
   const [selectedMacro, setSelectedMacro] = useState('PRODUITS');
   const [selectedSub, setSelectedSub] = useState('TOUT');
   
@@ -82,12 +82,11 @@ export default function Home() {
         query = query.or(`title.ilike.%${resolvedSearch}%,description.ilike.%${resolvedSearch}%`);
       }
 
-      // Logique de filtrage Axe 2 (Macro-Flux)
+      // Filtrage Macro-Flux (Axe 2)
       if (selectedMacro === "PRODUITS") {
         if (selectedSub !== "TOUT") {
           query = query.eq('category', selectedSub);
         } else {
-          // Exclure les catégories qui sont des macros elles-mêmes
           query = query.not('category', 'in', '("SERVICES","EMPLOIS","ÉVÉNEMENTS")');
         }
       } else {
@@ -97,10 +96,6 @@ export default function Home() {
       query = query.order('created_at', { ascending: false }).limit(50);
       const { data } = await query;
       setAds((data as any[]) || []);
-
-      if (search.trim().length > 1) {
-        await supabase.from('search_logs').insert([{ query: search.trim().toLowerCase(), results_count: data?.length || 0 }]);
-      }
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }, [search, selectedMacro, selectedSub]);
@@ -110,15 +105,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white text-black font-sans antialiased selection:bg-orange-100">
       
-      {/* --- LE RADAR (HEADER) --- */}
-      <header className="pt-8 px-4 pb-0 border-b border-gray-100 sticky top-0 z-30 bg-white/95 backdrop-blur-md">
+      <header className="pt-8 px-4 border-b border-gray-100 sticky top-0 z-30 bg-white/95 backdrop-blur-md">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <h1 onClick={() => {setSearch(''); setSelectedMacro('PRODUITS'); setSelectedSub('TOUT');}} className="text-xl font-black tracking-tighter cursor-pointer uppercase">GARALA.</h1>
             <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>
                 <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">
-                    {liveCount < 5 && lastAdTime ? `DERNIER SIGNAL : ${lastAdTime}` : `${liveCount} SIGNAUX LIVE`}
+                    {liveCount < 5 && lastAdTime ? `DERNIERE PUBLICATION : ${lastAdTime}` : `${liveCount} PUBLICATIONS LIVE`}
                 </span>
             </div>
           </div>
@@ -127,7 +121,7 @@ export default function Home() {
             <input 
               ref={searchInputRef}
               type="text" 
-              placeholder="QUOI ?" 
+              placeholder="VOUS RECHERCHEZ QUOI ?" 
               className="w-full text-4xl font-black border-none outline-none placeholder-gray-200 uppercase tracking-tighter text-black bg-transparent"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -135,7 +129,7 @@ export default function Home() {
             {search && <button onClick={() => setSearch('')} className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-300 text-xl">✕</button>}
           </div>
 
-          {/* AXE 2 : MACRO-FLUX NAVIGATION */}
+          {/* AXE 2 : NAVIGATION MACRO-FLUX */}
           <div className="flex justify-between border-t border-gray-50 pt-4 pb-4">
             {MACRO_FLUX.map((m) => (
               <button
@@ -151,7 +145,7 @@ export default function Home() {
 
           {/* AXE 2 : SOUS-CATÉGORIES PRODUITS */}
           {selectedMacro === "PRODUITS" && (
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-4 animate-in slide-in-from-left-2">
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-4">
               <button onClick={() => setSelectedSub('TOUT')} className={`px-4 py-1 text-[9px] font-black uppercase tracking-widest border-b-2 transition-all ${selectedSub === 'TOUT' ? "border-black text-black" : "border-transparent text-gray-300"}`}>TOUT</button>
               {PRODUITS_SUB.map((sub) => (
                 <button
@@ -167,7 +161,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* --- LE FLUX DE PARTICULES --- */}
       <main className="max-w-6xl mx-auto px-2 py-6">
         {loading ? (
           <div className="w-full h-1 bg-gray-50 overflow-hidden"><div className="w-1/3 h-full bg-orange-600 animate-progress"></div></div>
@@ -178,9 +171,9 @@ export default function Home() {
               const hideTitle = ['TECH', 'MODE', 'AUTO'].includes(ad.category) && ad.image_url; 
 
               if (isProduit) {
-                // RENDER MODE : GRILLE PRODUITS (Signal Visuel)
+                // MODE : GRILLE PRODUITS (SIGNAL VISUEL)
                 return (
-                  <div key={ad.id} className="bg-white border border-gray-100 group flex flex-col justify-between">
+                  <div key={ad.id} className="bg-white border border-gray-100 flex flex-col justify-between group">
                     <Link href={`/ad/${ad.id}`} className="block relative aspect-square overflow-hidden bg-gray-50">
                       {ad.image_url ? (
                         <img src={ad.image_url} alt={ad.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
@@ -202,10 +195,10 @@ export default function Home() {
                   </div>
                 );
               } else {
-                // RENDER MODE : LISTE FLUX (Services, Emplois, Événements)
+                // MODE : LISTE FLUX (SERVICES, EMPLOIS, ÉVÉNEMENTS)
                 return (
                   <div key={ad.id} className="bg-white border-b border-gray-100 p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
-                    <Link href={`/ad/${ad.id}`} className="w-20 h-20 bg-gray-100 overflow-hidden flex-shrink-0">
+                    <Link href={`/ad/${ad.id}`} className="w-16 h-16 bg-gray-100 overflow-hidden flex-shrink-0">
                       {ad.image_url ? <img src={ad.image_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[8px] font-black text-gray-300 uppercase italic">Garala</div>}
                     </Link>
                     <div className="flex-1">
@@ -218,7 +211,7 @@ export default function Home() {
                     </div>
                     <div className="text-right flex flex-col gap-2">
                        <p className="text-sm font-black tracking-tighter">{ad.price > 0 ? `${ad.price.toLocaleString()} F` : 'N.C'}</p>
-                       <a href={`https://wa.me/${ad.seller_phone}`} onClick={() => registerClick(ad.id)} target="_blank" className="bg-[#25D366] text-white px-4 py-2 text-[8px] font-black uppercase tracking-widest">CONTACTER</a>
+                       <a href={`https://wa.me/${ad.seller_phone}`} onClick={() => registerClick(ad.id)} target="_blank" className="bg-[#25D366] text-white px-4 py-2 text-[8px] font-black uppercase tracking-widest">PRENDRE</a>
                     </div>
                   </div>
                 );
