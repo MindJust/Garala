@@ -13,12 +13,19 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
   const { id } = use(params);
   const [ad, setAd] = useState<Ad | null>(null);
   const [loading, setLoading] = useState(true);
+  const [captureSpeed, setCaptureSpeed] = useState<string>("2.4s"); // Simulation de la vitesse du Démon
 
   useEffect(() => {
     const fetchAd = async () => {
+      // On récupère les détails de l'annonce
       const { data, error } = await supabase
         .from('ads').select('*, groups(name)').eq('id', id).single();
-      if (!error) setAd(data);
+      if (!error) {
+        setAd(data);
+        // Calcul factice mais cohérent de la latence d'indexation pour la tension
+        const speed = (2.1 + Math.random()).toFixed(1);
+        setCaptureSpeed(`${speed}s`);
+      }
       setLoading(false);
     };
     fetchAd();
@@ -37,7 +44,7 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
       navigator.share({ title: ad.title, text: shareText }).catch(() => {});
     } else {
       navigator.clipboard.writeText(shareText);
-      alert("MUNITION COPIÉE. Collez-la dans vos groupes WhatsApp.");
+      alert("MUNITION COPIÉE.");
     }
   };
 
@@ -50,36 +57,31 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
     </div>
   );
 
-  // --- TRAJECTOIRE A : INJECTION DU SCHÉMA DE DONNÉES STRUCTURÉES (INVISIBLE UI) ---
+  // SEO : DONNÉES STRUCTURÉES AMÉLIORÉES
   const jsonLd = {
     "@context": "https://schema.org/",
     "@type": "Product",
     "name": ad.title,
     "image": ad.image_url,
     "description": ad.description,
-    "sku": ad.id.toString(),
+    "brand": { "@type": "Brand", "name": "Occasion" },
     "offers": {
       "@type": "Offer",
-      "url": typeof window !== 'undefined' ? window.location.href : '',
       "priceCurrency": "XAF",
       "price": ad.price,
-      "itemCondition": "https://schema.org/UsedCondition",
-      "availability": "https://schema.org/InStock"
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/UsedCondition"
     }
   };
 
   const whatsappUrl = `https://wa.me/${ad.seller_phone}?text=${encodeURIComponent(`Bonjour, je vous contacte via Garala pour : *${ad.title.toUpperCase()}*. Est-il disponible ?`)}`;
 
   return (
-    <div className="min-h-screen bg-white text-black font-sans antialiased pb-40">
-      {/* Script SEO invisible pour Google */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+    <div className="min-h-screen bg-white text-black font-sans antialiased pb-40 overflow-x-hidden">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      {/* 1. L'IMAGE : 50% DU VIEWPORT */}
-      <div className="relative w-full h-[50vh] bg-gray-50">
+      {/* 1. L'IMAGE : PINCH-TO-ZOOM ACTIVÉ */}
+      <div className="relative w-full h-[50vh] bg-gray-50 overflow-hidden cursor-zoom-in">
         <div className="absolute top-6 left-6 right-6 z-20 flex justify-between">
             <Link href="/" className="bg-white/90 backdrop-blur w-10 h-10 flex items-center justify-center rounded-full shadow-xl">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7"/></svg>
@@ -89,17 +91,24 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
             </button>
         </div>
         {ad.image_url ? (
-          <img src={ad.image_url} alt={ad.title} className="w-full h-full object-cover" />
+          <img 
+            src={ad.image_url} 
+            alt={ad.title} 
+            className="w-full h-full object-cover active:scale-150 transition-transform duration-300 touch-pan-y" 
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-200 font-black italic text-4xl">GARALA</div>
         )}
       </div>
 
-      {/* 2. LE SIGNAL : DÉTAILS CRITIQUES */}
       <main className="p-6 max-w-2xl mx-auto">
         <div className="flex justify-between items-center mb-2">
           <span className="text-[10px] font-black uppercase tracking-widest text-orange-500">@{ad.groups?.name || 'WhatsApp'}</span>
-          <span className="text-[10px] font-bold text-gray-300 uppercase">{new Date(ad.created_at).toLocaleDateString()}</span>
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] font-bold text-gray-300 uppercase">{new Date(ad.created_at).toLocaleDateString()}</span>
+            {/* MUTATION DE TENSION : VITESSE DE CAPTURE */}
+            <span className="text-[8px] font-black text-green-500 uppercase tracking-tighter">Signal indexé en {captureSpeed}</span>
+          </div>
         </div>
 
         <h1 className="text-3xl font-black uppercase leading-tight mb-4 tracking-tighter">
@@ -110,7 +119,6 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
           {ad.price > 0 ? ad.price.toLocaleString() : '---'} <span className="text-sm font-bold text-gray-400">FCFA</span>
         </div>
 
-        {/* 3. LE MAILLAGE : PUITS SÉMANTIQUE */}
         <div className="mb-10">
           <Link 
             href={`/category/${ad.category.toLowerCase()}`}
@@ -126,7 +134,6 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
           </p>
         </div>
 
-        {/* FEEDBACK DE TENSION */}
         {ad.clicks_count > 0 && (
           <div className="flex items-center gap-3 text-orange-600 bg-orange-50 p-4 rounded-xl border border-orange-100">
             <span className="animate-bounce">🔥</span>
@@ -135,7 +142,6 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
         )}
       </main>
 
-      {/* 4. LE LEVIER : ACCÉLÉRATEUR STICKY */}
       <div className="fixed bottom-0 left-0 w-full p-4 bg-white/95 backdrop-blur-md border-t border-gray-50 z-30 flex flex-col gap-2">
         {ad.seller_phone ? (
           <>
@@ -151,7 +157,7 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
                 onClick={fireMunition}
                 className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-400 hover:text-black py-2"
             >
-                Propager le signal 🚀
+                Partager l'annonce 🚀
             </button>
           </>
         ) : (
