@@ -218,7 +218,7 @@ export default function Home() {
                             target="_blank"
                             className="block w-full bg-[#25D366] text-white text-center py-3 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[#128C7E] transition-colors mb-3"
                         >
-                            CONTACTER
+                            WHATSAPP
                         </a>
                     ) : (
                         <div className="w-full bg-gray-100 text-gray-300 text-center py-3 text-[10px] font-black uppercase tracking-widest mb-3 cursor-not-allowed">Masqué</div>
