@@ -55,6 +55,7 @@ export default function Home() {
 
   const resolveSynonyms = async (term: string) => {
     const cleanTerm = term.toLowerCase().trim();
+    // CORRECTION 406 : On ne requête pas si le terme est vide
     if (!cleanTerm) return term;
     const { data } = await supabase.from('search_synonyms').select('target').eq('term', cleanTerm).single();
     return data ? data.target : term;
@@ -79,28 +80,31 @@ export default function Home() {
       const resolvedSearch = await resolveSynonyms(search);
       let query = supabase.from('ads').select('*, groups(id, name)');
 
-      if (resolvedSearch.trim()) {
-        query = query.or(`title.ilike.%${resolvedSearch}%,description.ilike.%${resolvedSearch}%`);
+      const term = resolvedSearch.trim();
+      if (term) {
+        query = query.or(`title.ilike.%${term}%,description.ilike.%${term}%`);
       }
 
-      // Filtrage Macro-Flux (Axe 2)
-      // --- LOGIQUE DE FILTRAGE V4 (CORRIGÉE) ---
+      // --- LOGIQUE DE FILTRAGE V4 (CORRIGÉE SANS ERREUR 400) ---
       if (selectedMacro === "PRODUIT") {
         if (selectedSub !== "TOUT") {
           query = query.eq('category', selectedSub);
         } else {
-          // Utilisation d'un tableau pour le filtre 'in' (Syntaxe correcte Supabase JS)
-          query = query.not('category', 'in', ['SERVICE', 'SERVICES', 'EMPLOI', 'EMPLOIS', 'ÉVÉNEMENT', 'ÉVÉNEMENTS']);
-        }
-      } else {
-          // Utilisation d'une chaîne formatée pour éviter l'erreur 400 de Postgrest
+          // CORRECTION 400 : Syntaxe de chaîne pour le filtre 'in'
           query = query.not('category', 'in', '(SERVICE,SERVICES,EMPLOI,EMPLOIS,ÉVÉNEMENT,ÉVÉNEMENTS)');
         }
+      } else {
+        // Capture flexible du type (ex: SERVICE ou SERVICES) via filtre ilike
+        query = query.filter('category', 'ilike', `${selectedMacro}%`);
+      }
       
       query = query.order('created_at', { ascending: false }).limit(50);
-      const { data } = await query;
+      const { data, error } = await query;
+      if (error) throw error;
       setAds((data as any[]) || []);
-    } catch (err) { console.error(err); }
+    } catch (err) { 
+      console.error("Erreur de flux:", err); 
+    }
     finally { setLoading(false); }
   }, [search, selectedMacro, selectedSub]);
 
@@ -130,7 +134,7 @@ export default function Home() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            {search && <button onClick={() => setSearch('')} className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-300 text-xl">✕</button>}
+            {search && <button onClick={() => setSearch('')} className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-300 text-xl hover:text-black">✕</button>}
           </div>
 
           {/* AXE 2 : NAVIGATION MACRO-FLUX */}
@@ -175,7 +179,6 @@ export default function Home() {
               const hideTitle = ['TECH', 'MODE', 'AUTO'].includes(ad.category) && ad.image_url; 
 
               if (isProduit) {
-                // MODE : GRILLE PRODUITS (SIGNAL VISUEL)
                 return (
                   <div key={ad.id} className="bg-white border border-gray-100 flex flex-col justify-between group">
                     <Link href={`/ad/${ad.id}`} className="block relative aspect-square overflow-hidden bg-gray-50">
@@ -199,7 +202,6 @@ export default function Home() {
                   </div>
                 );
               } else {
-                // MODE : LISTE FLUX (SERVICES, EMPLOIS, ÉVÉNEMENTS)
                 return (
                   <div key={ad.id} className="bg-white border-b border-gray-100 p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
                     <Link href={`/ad/${ad.id}`} className="w-16 h-16 bg-gray-100 overflow-hidden flex-shrink-0">
@@ -224,7 +226,7 @@ export default function Home() {
           </div>
         ) : (
           <div className="max-w-md mx-auto text-center py-32 border-2 border-dashed border-gray-100 rounded-3xl">
-            <h2 className="text-2xl font-black uppercase mb-8 italic text-gray-200">"{search || selectedMacro}" EST RARE</h2>
+            <h2 className="text-2xl font-black uppercase mb-8 italic text-gray-200">"{search || (selectedMacro === 'PRODUIT' ? 'PRODUITS' : selectedMacro + 'S')}" EST RARE</h2>
             {!showAlertForm ? (
               <button onClick={() => setShowAlertForm(true)} className="bg-black text-white px-10 py-5 text-[10px] font-black uppercase tracking-widest">Activer la traque</button>
             ) : (
@@ -238,7 +240,7 @@ export default function Home() {
       </main>
 
       <footer className="py-20 border-t border-gray-50 text-center">
-        <p className="text-[9px] font-black text-gray-200 uppercase tracking-[1em]">GARALA - RCA</p>
+        <p className="text-[9px] font-black text-gray-200 uppercase tracking-[1em]">OS ÉCONOMIE INFORMELLE RCA</p>
       </footer>
       
       <style jsx global>{`
