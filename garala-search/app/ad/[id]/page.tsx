@@ -1,60 +1,64 @@
-import { Metadata, ResolvingMetadata } from 'next';
-import { supabase } from '../../../lib/supabase';
+import { Metadata } from 'next';
+import { createClient } from '@supabase/supabase-js'; // Import direct pour le serveur
 import AdClient from './AdClient';
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
-// --- PRIORITÉ SEO : SIGNAL POUR WHATSAPP (RÉSILIENCE MAXIMALE) ---
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-
+// Fonction utilitaire pour éviter l'erreur 500
+async function getAdData(id: string) {
   try {
-    const { data: ad, error } = await supabase
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    const { data } = await supabase
       .from('ads')
-      .select('title, description, image_url')
+      .select('*, groups(name)')
       .eq('id', id)
       .single();
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
 
-    // Si erreur ou pas d'annonce, on renvoie un signal neutre au lieu de planter
-    if (error || !ad) {
-      return { title: "Annonce Garala Search" };
-    }
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const ad = await getAdData(id);
 
-    return {
+  if (!ad) return { title: "Garala Search" };
+
+  return {
+    title: ad.title,
+    description: ad.description,
+    openGraph: {
       title: ad.title,
       description: ad.description,
-      openGraph: {
-        title: ad.title,
-        description: ad.description,
-        url: `https://garala.vercel.app/ad/${id}`,
-        siteName: 'Garala Search',
-        images: ad.image_url ? [{ url: ad.image_url, width: 1200, height: 630 }] : [],
-        type: 'website',
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title: ad.title,
-        description: ad.description,
-        images: ad.image_url ? [ad.image_url] : [],
-      }
-    };
-  } catch (e) {
-    // Fail-safe absolu pour éviter l'erreur 500
-    return { title: "Garala Search" };
-  }
+      url: `https://garala.vercel.app/ad/${id}`,
+      siteName: 'Garala Search',
+      type: 'website',
+      images: ad.image_url ? [
+        {
+          url: ad.image_url,
+          width: 800,
+          height: 600,
+        }
+      ] : [],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: ad.title,
+      images: ad.image_url ? [ad.image_url] : [],
+    }
+  };
 }
 
 export default async function Page({ params }: Props) {
   const { id } = await params;
+  const ad = await getAdData(id);
 
-  // Récupération sécurisée pour le rendu
-  const { data: ad } = await supabase
-    .from('ads')
-    .select('*, groups(name)')
-    .eq('id', id)
-    .single();
-
+  // On renvoie 200 OK quoi qu'il arrive
   return <AdClient id={id} initialAd={ad} />;
 }
