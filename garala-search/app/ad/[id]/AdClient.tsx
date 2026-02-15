@@ -9,6 +9,21 @@ interface Ad {
   clicks_count: number; groups: { name: string } | null;
 }
 
+const getFlag = (phone: string | null) => {
+  if (!phone) return null;
+  const p = phone.replace(/[^0-9]/g, "");
+  const flags: Record<string, string> = {
+    "236": "cf", "228": "tg", "237": "cm", "225": "ci", "221": "sn", 
+    "229": "bj", "226": "bf", "223": "ml", "227": "ne", "224": "gn",
+    "234": "ng", "233": "gh", "235": "td", "241": "ga", "242": "cg",
+    "243": "cd", "250": "rw", "257": "bi", "212": "ma", "213": "dz",
+    "216": "tn", "27": "za", "33": "fr", "32": "be", "41": "ch",
+    "34": "es", "44": "gb", "49": "de", "1": "us", "86": "cn",
+    "90": "tr", "971": "ae", "91": "in"
+  };
+  return flags[p.substring(0, 3)] || flags[p.substring(0, 2)] || flags[p.substring(0, 1)] || null;
+};
+
 export default function AdClient({ id, initialAd }: { id: string, initialAd: any }) {
   const [ad, setAd] = useState<Ad | null>(initialAd);
   const [loading, setLoading] = useState(!initialAd);
@@ -105,7 +120,19 @@ export default function AdClient({ id, initialAd }: { id: string, initialAd: any
       {/* 2. LE SIGNAL : DÉTAILS CRITIQUES */}
       <main className="p-6 max-w-2xl mx-auto text-black">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-[10px] font-black uppercase tracking-widest text-orange-500">@{ad.groups?.name || 'WhatsApp'}</span>
+          <div className="flex items-center gap-2">
+            {getFlag(ad.seller_phone) ? (
+              <img 
+                src={`https://flagcdn.com/w20/${getFlag(ad.seller_phone)}.png`} 
+                className="w-4 h-auto rounded-[1px]" 
+                alt=""
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
+            ) : <span className="text-[10px]">🌍</span>}
+            <span className="text-[10px] font-black uppercase tracking-widest text-orange-500">
+              @{ad.groups?.name || 'WhatsApp'}
+            </span>
+          </div>
           <div className="flex flex-col items-end">
             <span className="text-[10px] font-bold text-gray-300 uppercase">{new Date(ad.created_at).toLocaleDateString()}</span>
             <span className="text-[7px] font-black text-green-500 uppercase tracking-tighter italic">Signal indexé en {captureSpeed}</span>
