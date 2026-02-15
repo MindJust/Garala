@@ -9,11 +9,11 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'DENY', // Empêche l'affichage dans un iframe (anti-clickjacking)
+            value: 'DENY',
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff', // Empêche le navigateur d'interpréter les fichiers comme autre chose
+            value: 'nosniff',
           },
           {
             key: 'Referrer-Policy',
@@ -21,25 +21,33 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()', // Sécurité : bloque l'accès aux capteurs
+            value: 'camera=(), microphone=(), geolocation=()',
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com; img-src 'self' data: https://*.supabase.co; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co;",
+            // MISE À JOUR : Ajout de https://flagcdn.com dans img-src
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com; img-src 'self' data: https://*.supabase.co https://flagcdn.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co;",
           }
         ],
       },
     ];
   },
 
-  // 2. Optimisation des images externes (Supabase)
+  // 2. Optimisation des images externes
   images: {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**.supabase.co', // Autorise toutes les images venant de ton Supabase
+        hostname: '**.supabase.co',
         port: '',
         pathname: '/storage/v1/object/public/**',
+      },
+      // MISE À JOUR : Autorisation pour les drapeaux
+      {
+        protocol: 'https',
+        hostname: 'flagcdn.com',
+        port: '',
+        pathname: '/**',
       },
     ],
   },
