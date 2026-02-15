@@ -27,7 +27,14 @@ export async function generateMetadata(
     openGraph: {
       title: ad.title,
       description: ad.description,
-      images: ad.image_url ? [ad.image_url] : [],
+      images: ad.image_url ? [
+        {
+          url: ad.image_url,
+          width: 800,
+          height: 600,
+          type: 'image/jpeg',
+        }
+      ] : [],
       type: 'article',
       url: `https://garala.vercel.app/ad/${id}`,
     },
