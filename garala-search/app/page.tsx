@@ -214,11 +214,14 @@ export default function Home() {
                           <span className="truncate flex-1 mr-2 flex items-center gap-1">
                             {getFlag(ad.seller_phone) ? (
                               <img 
-                                src={`https://flagcdn.com/${getFlag(ad.seller_phone)}.svg`} 
-                                className="w-3 h-2 inline-block object-cover rounded-sm" 
-                                alt="flag"
+                                src={`https://flagcdn.com/w20/${getFlag(ad.seller_phone)}.png`} 
+                                className="w-4 h-auto inline-block rounded-[1px] shadow-[0_0_1px_rgba(0,0,0,0.5)]" 
+                                alt=""
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
                               />
-                            ) : "🌍"}
+                            ) : (
+                              <span className="grayscale opacity-50 text-[10px]">🌍</span>
+                            )}
                             @{ad.groups?.name || 'WhatsApp'}
                           </span>
                           {ad.clicks_count > 0 && <span className="text-orange-600 font-black">🔥 {ad.clicks_count}</span>}
