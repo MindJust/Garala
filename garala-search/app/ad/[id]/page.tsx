@@ -30,8 +30,8 @@ export async function generateMetadata(
       images: ad.image_url ? [
         {
           url: ad.image_url,
-          width: 800,
-          height: 600,
+          width: 1200,
+          height: 630,
           type: 'image/jpeg',
         }
       ] : [],
