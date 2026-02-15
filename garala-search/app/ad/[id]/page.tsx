@@ -1,17 +1,64 @@
+import { Metadata, ResolvingMetadata } from 'next';
+import { createClient } from '@/lib/supabase'; // Ajuste le chemin si nécessaire
+import AdContent from './AdContent'; // On va créer ce petit wrapper juste en dessous
+
+interface Props {
+  params: Promise<{ id: string }>;
+}
+
+// --- PRIORITÉ 1 : LE SIGNAL POUR WHATSAPP (SERVEUR) ---
+export async function generateMetadata(
+  { params }: Props,
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  const { id } = await params;
+  
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const { data: ad } = await supabase
+    .from('ads')
+    .select('title, description, image_url')
+    .eq('id', id)
+    .single();
+
+  if (!ad) return { title: "Annonce introuvable" };
+
+  return {
+    title: ad.title,
+    description: ad.description,
+    openGraph: {
+      title: ad.title,
+      description: ad.description,
+      images: ad.image_url ? [ad.image_url] : [],
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: ad.title,
+      description: ad.description,
+      images: ad.image_url ? [ad.image_url] : [],
+    },
+  };
+}
+
+// --- LA PAGE (SERVEUR) ---
+export default async function Page({ params }: Props) {
+  const { id } = await params;
+  return <AdDetailClient id={id} />;
+}
+
+// --- LE CONTENU INTERACTIF (CLIENT) ---
+// Note: On garde exactement ton code précédent ici
 "use client";
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import Link from 'next/link';
 
-interface Ad {
-  id: number; title: string; description: string; price: number; category: string;
-  image_url: string | null; seller_phone: string | null; created_at: string;
-  clicks_count: number; groups: { name: string } | null;
-}
-
-export default function AdDetail({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
-  const [ad, setAd] = useState<Ad | null>(null);
+function AdDetailClient({ id }: { id: string }) {
+  const [ad, setAd] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [captureSpeed, setCaptureSpeed] = useState<string>("2.1s");
 
@@ -21,7 +68,6 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
         .from('ads').select('*, groups(name)').eq('id', id).single();
       if (!error && data) {
         setAd(data);
-        // Simulation de la latence d'indexation (Axe Vision)
         const randomSpeed = (1.8 + Math.random() * 0.9).toFixed(1);
         setCaptureSpeed(`${randomSpeed}s`);
       }
@@ -56,7 +102,6 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
     </div>
   );
 
-  // --- TRAJECTOIRE A : DONNÉES STRUCTURÉES AVANCÉES (SEO PREDICTIF) ---
   const jsonLd = {
     "@context": "https://schema.org/",
     "@type": "Product",
@@ -76,44 +121,33 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
     }
   };
 
-  const whatsappUrl = `https://wa.me/${ad.seller_phone}?text=${encodeURIComponent(`Bonjour, je vous contacte via Garala pour : *${ad.title.toUpperCase()}*. Est-il disponible ?`)}`;
+  const whatsappUrl = `https://wa.me/${ad.seller_phone}?text=${encodeURIComponent(`Bonjour, je vous contacte via Garala pour : *${ad.title.toUpperCase()}*. Est-il disponible ?`)}\n\nLien : ${window.location.origin}/ad/${ad.id}`;
 
   return (
     <div className="min-h-screen bg-white text-black font-sans antialiased pb-40 overflow-x-hidden">
-      {/* Script SEO invisible pour Google */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      {/* 1. L'IMAGE : OPTIMISÉE POUR L'INSPECTION (PINCH-TO-ZOOM) */}
       <div className="relative w-full h-[50vh] bg-gray-50 overflow-hidden">
         <div className="absolute top-6 left-6 right-6 z-20 flex justify-between">
-            <Link href="/" className="bg-white/90 backdrop-blur w-10 h-10 flex items-center justify-center rounded-full shadow-xl">
+            <Link href="/" className="bg-white/90 backdrop-blur w-10 h-10 flex items-center justify-center rounded-full shadow-xl text-black">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7"/></svg>
             </Link>
             <button onClick={fireMunition} className="bg-white/90 backdrop-blur w-10 h-10 flex items-center justify-center rounded-full shadow-xl text-orange-600">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
             </button>
         </div>
         {ad.image_url ? (
-          <img 
-            src={ad.image_url} 
-            alt={ad.title} 
-            className="w-full h-full object-cover active:scale-150 transition-transform duration-300 cursor-zoom-in touch-none" 
-          />
+          <img src={ad.image_url} alt={ad.title} className="w-full h-full object-cover active:scale-150 transition-transform duration-300 cursor-zoom-in touch-none" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-200 font-black italic text-4xl">GARALA</div>
         )}
       </div>
 
-      {/* 2. LE SIGNAL : DÉTAILS CRITIQUES */}
-      <main className="p-6 max-w-2xl mx-auto">
+      <main className="p-6 max-w-2xl mx-auto text-black">
         <div className="flex justify-between items-center mb-2">
           <span className="text-[10px] font-black uppercase tracking-widest text-orange-500">@{ad.groups?.name || 'WhatsApp'}</span>
           <div className="flex flex-col items-end">
             <span className="text-[10px] font-bold text-gray-300 uppercase">{new Date(ad.created_at).toLocaleDateString()}</span>
-            {/* SIGNAL DE VITESSE (TA) */}
             <span className="text-[7px] font-black text-green-500 uppercase tracking-tighter italic">Signal indexé en {captureSpeed}</span>
           </div>
         </div>
@@ -122,11 +156,11 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
           {ad.title}
         </h1>
 
-        <div className="text-6xl font-black tracking-tighter mb-8 text-black">
+        <div className="text-6xl font-black tracking-tighter mb-8">
           {ad.price > 0 ? ad.price.toLocaleString() : '---'} <span className="text-sm font-bold text-gray-400">FCFA</span>
         </div>
 
-        <div className="mb-10">
+        <div className="mb-10 text-black">
           <Link 
             href={`/category/${ad.category.toLowerCase()}`}
             className="inline-block bg-black text-white px-4 py-2 text-[8px] font-black uppercase tracking-[0.2em] hover:bg-orange-600 transition-all"
@@ -149,7 +183,6 @@ export default function AdDetail({ params }: { params: Promise<{ id: string }> }
         )}
       </main>
 
-      {/* 4. LE LEVIER : ACCÉLÉRATEUR STICKY */}
       <div className="fixed bottom-0 left-0 w-full p-4 bg-white/95 backdrop-blur-md border-t border-gray-50 z-30 flex flex-col gap-2">
         {ad.seller_phone ? (
           <>
