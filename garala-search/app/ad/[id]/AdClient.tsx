@@ -79,7 +79,7 @@ export default function AdClient({ id, initialAd }: { id: string, initialAd: any
   };
 
   // LOGIQUE DU LIEN MAGIQUE : On ajoute l'URL à la fin pour forcer l'aperçu WhatsApp
-  const whatsappUrl = `https://wa.me/${ad.seller_phone}?text=${encodeURIComponent(`Bonjour, je vous contacte via Garala pour : *${ad.title.toUpperCase()}*. Est-il disponible ?`)}\n\n${window.location.origin}/ad/${ad.id}`;
+  const whatsappUrl = `https://wa.me/${ad.seller_phone}?text=${encodeURIComponent(`Bonjour, je vous contacte via Garala pour : *${ad.title.toUpperCase()}*. Est-il disponible ?\n\n${window.location.origin}/ad/${ad.id}`)}`;
   
   return (
     <div className="min-h-screen bg-white text-black font-sans antialiased pb-40 overflow-x-hidden">
