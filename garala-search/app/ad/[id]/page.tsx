@@ -1,49 +1,60 @@
 import { Metadata, ResolvingMetadata } from 'next';
-import { supabase } from '../../../lib/supabase'; // On utilise ton instance existante
-import AdClient from './AdClient'; // Nous allons créer ce fichier juste après
+import { supabase } from '../../../lib/supabase';
+import AdClient from './AdClient';
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
-// --- PRIORITÉ SEO : SIGNAL POUR WHATSAPP (SERVEUR) ---
+// --- PRIORITÉ SEO : SIGNAL POUR WHATSAPP (RÉSILIENCE MAXIMALE) ---
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
 
-  // REQUÊTE RÉPARÉE
-  const { data: ad } = await supabase
-    .from('ads')
-    .select('title, description, image_url')
-    .eq('id', id)
-    .single();
+  try {
+    const { data: ad, error } = await supabase
+      .from('ads')
+      .select('title, description, image_url')
+      .eq('id', id)
+      .single();
 
-  if (!ad) return { title: "Annonce introuvable" };
+    // Si erreur ou pas d'annonce, on renvoie un signal neutre au lieu de planter
+    if (error || !ad) {
+      return { title: "Annonce Garala Search" };
+    }
 
-  return {
-    title: ad.title,
-    description: ad.description,
-    openGraph: {
+    return {
       title: ad.title,
       description: ad.description,
-      url: `https://garala.vercel.app/ad/${id}`,
-      siteName: 'Garala Search',
-      images: ad.image_url ? [{ url: ad.image_url }] : [], // WhatsApp préfère la simplicité ici
-      type: 'website',
-    },
-  };
+      openGraph: {
+        title: ad.title,
+        description: ad.description,
+        url: `https://garala.vercel.app/ad/${id}`,
+        siteName: 'Garala Search',
+        images: ad.image_url ? [{ url: ad.image_url, width: 1200, height: 630 }] : [],
+        type: 'website',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: ad.title,
+        description: ad.description,
+        images: ad.image_url ? [ad.image_url] : [],
+      }
+    };
+  } catch (e) {
+    // Fail-safe absolu pour éviter l'erreur 500
+    return { title: "Garala Search" };
+  }
 }
 
-// --- LA PAGE (SERVEUR) ---
 export default async function Page({ params }: Props) {
   const { id } = await params;
 
-  // On récupère les données une seule fois côté serveur
+  // Récupération sécurisée pour le rendu
   const { data: ad } = await supabase
     .from('ads')
     .select('*, groups(name)')
     .eq('id', id)
     .single();
 
-  // On passe les données au composant Client pour l'interactivité
   return <AdClient id={id} initialAd={ad} />;
 }
