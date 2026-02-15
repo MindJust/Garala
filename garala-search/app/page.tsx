@@ -4,23 +4,20 @@ import { supabase } from '../lib/supabase';
 import Link from 'next/link';
 
 const getFlag = (phone: string | null) => {
-  if (!phone) return "🌍";
-  const p = phone.replace(/[^0-9]/g, ""); // Nettoyage
+  if (!phone) return null;
+  const p = phone.replace(/[^0-9]/g, "");
   const flags: Record<string, string> = {
-    "236": "🇨🇫", "228": "🇹🇬", "237": "🇨🇲", "225": "🇨🇮", "221": "🇸🇳", 
-    "229": "🇧🇯", "226": "🇧🇫", "223": "🇲🇱", "227": "🇳🇪", "224": "🇬🇳",
-    "234": "🇳🇬", "233": "🇬🇭", "235": "🇹🇩", "241": "🇬🇦", "242": "🇨🇬",
-    "243": "🇨🇩", "250": "🇷🇼", "257": "🇧🇮", "212": "🇲🇦", "213": "🇩🇿",
-    "216": "🇹🇳", "27": "🇿🇦", "33": "🇫🇷", "32": "🇧🇪", "41": "🇨🇭",
-    "34": "🇪🇸", "44": "🇬🇧", "49": "🇩🇪", "1": "🇺🇸", "86": "🇨🇳",
-    "90": "🇹🇷", "971": "🇦🇪", "91": "🇮🇳"
+    "236": "cf", "228": "tg", "237": "cm", "225": "ci", "221": "sn", 
+    "229": "bj", "226": "bf", "223": "ml", "227": "ne", "224": "gn",
+    "234": "ng", "233": "gh", "235": "td", "241": "ga", "242": "cg",
+    "243": "cd", "250": "rw", "257": "bi", "212": "ma", "213": "dz",
+    "216": "tn", "27": "za", "33": "fr", "32": "be", "41": "ch",
+    "34": "es", "44": "gb", "49": "de", "1": "us", "86": "cn",
+    "90": "tr", "971": "ae", "91": "in"
   };
 
-  // Test du préfixe sur 3 chiffres, puis 2, puis 1 (ex: 236 puis 33 puis 1)
-  if (flags[p.substring(0, 3)]) return flags[p.substring(0, 3)];
-  if (flags[p.substring(0, 2)]) return flags[p.substring(0, 2)];
-  if (flags[p.substring(0, 1)]) return flags[p.substring(0, 1)];
-  return "🌍";
+  const code = flags[p.substring(0, 3)] || flags[p.substring(0, 2)] || flags[p.substring(0, 1)];
+  return code || null;
 };
 
 interface Ad {
@@ -214,7 +211,16 @@ export default function Home() {
                     <div className="p-3">
                       {!hideTitle && <h3 className="text-[10px] font-bold leading-tight uppercase line-clamp-2 mb-2 h-8">{ad.title}</h3>}
                       <div className="flex justify-between items-center text-[8px] font-bold text-gray-400 uppercase tracking-wide mb-3">
-                          <span className="truncate flex-1 mr-2">{getFlag(ad.seller_phone)} @{ad.groups?.name || 'WhatsApp'}</span>
+                          <span className="truncate flex-1 mr-2 flex items-center gap-1">
+                            {getFlag(ad.seller_phone) ? (
+                              <img 
+                                src={`https://flagcdn.com/${getFlag(ad.seller_phone)}.svg`} 
+                                className="w-3 h-2 inline-block object-cover rounded-sm" 
+                                alt="flag"
+                              />
+                            ) : "🌍"}
+                            @{ad.groups?.name || 'WhatsApp'}
+                          </span>
                           {ad.clicks_count > 0 && <span className="text-orange-600 font-black">🔥 {ad.clicks_count}</span>}
                       </div>
                       <a href={`https://wa.me/${ad.seller_phone}?text=${encodeURIComponent("Bonjour, je vous contacte pour l'annonce *" + ad.title + "* vue sur Garala.")}`} onClick={() => registerClick(ad.id)} target="_blank" className="block w-full bg-[#25D366] text-white text-center py-3 text-[10px] font-black uppercase tracking-[0.2em]">WHATSAPP</a>
