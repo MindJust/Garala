@@ -1,5 +1,5 @@
 import { Metadata, ResolvingMetadata } from 'next';
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '../../../lib/supabase'; // On utilise ton instance existante
 import AdClient from './AdClient'; // Nous allons créer ce fichier juste après
 
 interface Props {
@@ -7,12 +7,10 @@ interface Props {
 }
 
 // --- PRIORITÉ SEO : SIGNAL POUR WHATSAPP (SERVEUR) ---
-export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata
-): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
 
+  // REQUÊTE RÉPARÉE
   const { data: ad } = await supabase
     .from('ads')
     .select('title, description, image_url')
@@ -27,22 +25,10 @@ export async function generateMetadata(
     openGraph: {
       title: ad.title,
       description: ad.description,
-      images: ad.image_url ? [
-        {
-          url: ad.image_url,
-          width: 1200,
-          height: 630,
-          type: 'image/jpeg',
-        }
-      ] : [],
-      type: 'article',
       url: `https://garala.vercel.app/ad/${id}`,
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: ad.title,
-      description: ad.description,
-      images: ad.image_url ? [ad.image_url] : [],
+      siteName: 'Garala Search',
+      images: ad.image_url ? [{ url: ad.image_url }] : [], // WhatsApp préfère la simplicité ici
+      type: 'website',
     },
   };
 }
