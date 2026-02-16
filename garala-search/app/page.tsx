@@ -118,7 +118,17 @@ export default function Home() {
       query = query.order('created_at', { ascending: false }).limit(50);
       const { data, error } = await query;
       if (error) throw error;
-      setAds((data as any[]) || []);
+      
+      // Tri Priorité RCA (236) puis Temps
+      const sorted = (data as any[])?.sort((a, b) => {
+        const aIsRca = a.seller_phone?.replace(/[^0-9]/g, "").startsWith("236") ? 1 : 0;
+        const bIsRca = b.seller_phone?.replace(/[^0-9]/g, "").startsWith("236") ? 1 : 0;
+        
+        if (aIsRca !== bIsRca) return bIsRca - aIsRca; // RCA d'abord
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime(); // Puis temps
+      });
+
+      setAds(sorted || []);
     } catch (err) { 
       console.error("Erreur de flux:", err); 
     }
@@ -133,7 +143,7 @@ export default function Home() {
       <header className="pt-8 px-4 border-b border-gray-100 sticky top-0 z-30 bg-white/95 backdrop-blur-md">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <h1 onClick={() => {setSearch(''); setSelectedMacro('PRODUIT'); setSelectedSub('TOUT');}} className="text-xl font-black tracking-tighter cursor-pointer uppercase">GARALA. (RCA)</h1>
+            <h1 onClick={() => {setSearch(''); setSelectedMacro('PRODUIT'); setSelectedSub('TOUT');}} className="text-xl font-black tracking-tighter cursor-pointer uppercase">GARALA<span className="text-orange-600">.RCA</span></h1>
             <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>
                 <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">
