@@ -215,7 +215,7 @@ export default function Home() {
                         <div className="w-full h-full flex items-center justify-center p-4 text-center text-[10px] font-black uppercase text-gray-200 italic">PAS D'IMAGE</div>
                       )}
                       <div className="absolute bottom-0 right-0 bg-black text-white px-3 py-1 font-black text-sm tracking-tighter">
-                        {ad.price > 0 ? ad.price.toLocaleString() : 'N.C'}
+                        {ad.price > 0 ? ad.price.toLocaleString() : 'PAS DE PRIX'}
                       </div>
                     </Link>
                     <div className="p-3">
@@ -255,7 +255,7 @@ export default function Home() {
                       <p className="text-[10px] font-medium text-gray-500 line-clamp-1">{ad.description}</p>
                     </div>
                     <div className="text-right flex flex-col gap-2">
-                       <p className="text-sm font-black tracking-tighter">{ad.price > 0 ? `${ad.price.toLocaleString()} F` : 'N.C'}</p>
+                       <p className="text-sm font-black tracking-tighter">{ad.price > 0 ? `${ad.price.toLocaleString()} F` : 'PAS DE PRIX'}</p>
                        <a href={`https://wa.me/${ad.seller_phone}`} onClick={() => registerClick(ad.id)} target="_blank" className="bg-[#25D366] text-white px-4 py-2 text-[8px] font-black uppercase tracking-widest">WHATSAPP</a>
                     </div>
                   </div>
