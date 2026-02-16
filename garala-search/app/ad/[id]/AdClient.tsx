@@ -144,7 +144,7 @@ export default function AdClient({ id, initialAd }: { id: string, initialAd: any
         </h1>
 
         <div className="text-6xl font-black tracking-tighter mb-8">
-          {ad.price > 0 ? ad.price.toLocaleString() : '---'} <span className="text-sm font-bold text-gray-400">FCFA</span>
+          {ad.price > 0 ? ad.price.toLocaleString() : 'PAS DE PRIX'} <span className="text-sm font-bold text-gray-400">FCFA</span>
         </div>
 
         {/* 3. LE MAILLAGE : PUITS SÉMANTIQUE */}
