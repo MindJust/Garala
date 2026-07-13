@@ -6,7 +6,7 @@ L'application repose sur une architecture moderne séparée en 4 piliers princip
 
 [ Groupes WhatsApp ] ──(Scraping Bot)──> [ LLM (Nettoyage/Filtrage) ] ──> [ Supabase (BDD/Images) ] ──> [ PWA Next.js ]
 
- * **Scraping Bot (WhatsApp) :** Surveille en continu les groupes de vente ciblés (où seuls les vendeurs publient) pour extraire les messages textuels et les médias : https://github.com/MindJust/Garala-cloud-collector
+ * **Scraping Bot (WhatsApp) :** Surveille en continu les groupes de vente ciblés (où seuls les vendeurs publient) pour extraire les messages textuels et les médias : https://github.com/MindJust/garala-collector
  * **Intelligence Artificielle (LLM) :** Analyse les messages bruts pour filtrer le spam, extraire les données clés (prix, localisation, type de bien) et reformuler l'annonce pour la rendre plus lisible : https://github.com/MindJust/Garala-cloud-worker
  * **Backend & Stockage (Supabase) :** Base de données PostgreSQL pour structurer les annonces et stockage (Storage Bucket) pour héberger les images extraites.
  * **Frontend (Next.js & PWA) :** Une interface web ultra-rapide, optimisée pour le SEO et installable sur smartphone comme une application native (Progressive Web App).
